@@ -1,0 +1,41 @@
+name: Cross-platform quality
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npx expo-doctor
+      - run: npm audit
+      - name: Export Android and iOS bundles
+        if: runner.os == 'Linux'
+        run: npm run build:bundles
+      - name: Install Chromium
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+      - name: Run desktop and phone-browser tests
+        if: runner.os == 'Linux'
+        run: npm run test:e2e
+      - name: Upload failing browser traces
+        if: failure() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-traces
+          path: /tmp/pirate-native-playwright-results
+          retention-days: 7
