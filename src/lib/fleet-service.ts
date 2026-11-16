@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { z } from "zod";
+import { ApiRequestError, JsonApiClient, pollingDelay } from "./network";
 import {
   activeMission,
   dispatchError,
@@ -89,6 +90,7 @@ export interface FleetService {
   cancel(taskId: string): Promise<void>;
   demo(command: DemoCommand): Promise<void>;
   refresh(): Promise<void>;
+  setActive?(active: boolean): void;
 }
 const clone = (snapshot: FleetSnapshot): FleetSnapshot =>
   JSON.parse(JSON.stringify(snapshot));
@@ -99,6 +101,7 @@ export class DemoFleetService implements FleetService {
   private writes: Promise<void> = Promise.resolve();
   private storageIssue?: string;
   private ready: Promise<void>;
+  private lastPersisted = 0;
   constructor() {
     this.ready = this.load();
   }
@@ -115,9 +118,11 @@ export class DemoFleetService implements FleetService {
       this.snapshot.robot.status = "idle";
     tickDemo(this.snapshot);
   }
-  private publish() {
+  private publish(persist = true) {
     const data = clone(this.snapshot);
     this.listener?.(data, this.storageIssue);
+    if (!persist) return this.writes;
+    this.lastPersisted = Date.now();
     // Serialize writes so an older asynchronous save cannot overwrite a newer command.
     this.writes = this.writes.then(async () => {
       try {
@@ -139,7 +144,8 @@ export class DemoFleetService implements FleetService {
       void this.publish();
       timer = setInterval(() => {
         tickDemo(this.snapshot);
-        void this.publish();
+        // UI remains fluid; routine heartbeat/progress persistence is bounded.
+        void this.publish(Date.now() - this.lastPersisted >= 5000);
       }, 500);
     });
     return () => {
@@ -217,30 +223,31 @@ export class ApiFleetService implements FleetService {
   private connectionIssue?: string;
   private ambiguous = false;
   private mutating = false;
-  private controllers = new Set<AbortController>();
-  constructor(private baseUrl: string) {}
-  private async request(path: string, options: RequestInit = {}) {
-    const controller = new AbortController();
-    this.controllers.add(controller);
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    try {
-      const response = await fetch(`${this.baseUrl}/api/v1${path}`, {
-        ...options,
-        signal: controller.signal,
-        headers: { "Content-Type": "application/json" },
-      });
-      const body = await response.json().catch(() => null);
-      if (!response.ok)
-        throw new Error(
-          typeof body?.detail === "string"
-            ? body.detail
-            : `API request failed (${response.status}).`,
-        );
-      return body;
-    } finally {
-      clearTimeout(timeout);
-      this.controllers.delete(controller);
-    }
+  private client: JsonApiClient;
+  private timer?: ReturnType<typeof setInterval>;
+  private active = true;
+  private failures = 0;
+  private nextPollAt = 0;
+  constructor(baseUrl: string) {
+    this.client = new JsonApiClient(baseUrl);
+  }
+  private async request(
+    path: string,
+    options: RequestInit = {},
+    allowEmpty = false,
+  ) {
+    return this.client.request(`/api/v1${path}`, options, allowEmpty);
+  }
+  private startPolling() {
+    clearInterval(this.timer);
+    if (!this.active || this.stopped) return;
+    this.timer = setInterval(() => {
+      if (Date.now() >= this.nextPollAt) void this.refresh();
+    }, 2000);
+  }
+  setActive(active: boolean) {
+    this.active = active;
+    this.startPolling();
   }
   private publish() {
     if (!this.stopped)
@@ -256,11 +263,11 @@ export class ApiFleetService implements FleetService {
     this.listener = listener;
     void this.refresh();
     // Polling is supported on native and web without relying on browser EventSource.
-    const timer = setInterval(() => void this.refresh(), 2000);
+    this.startPolling();
     return () => {
       this.stopped = true;
-      clearInterval(timer);
-      this.controllers.forEach((c) => c.abort());
+      clearInterval(this.timer);
+      this.client.abortAll();
       this.listener = undefined;
     };
   }
@@ -275,9 +282,9 @@ export class ApiFleetService implements FleetService {
   private async fetchSnapshot() {
     try {
       const raw = await this.request("/robots");
-      const robots = z
-        .array(robotSchema)
-        .parse(Array.isArray(raw) ? raw : raw?.robots);
+      const robots = Array.isArray(raw)
+        ? z.array(robotSchema).parse(raw)
+        : z.object({ robots: z.array(robotSchema) }).parse(raw).robots;
       const robot = robots.find((r) => r.robot_id === ROBOT_ID);
       if (!robot)
         throw new Error("Configured robot is missing from the API response.");
@@ -329,7 +336,16 @@ export class ApiFleetService implements FleetService {
         );
       this.snapshot = snapshot;
       this.connectionIssue = undefined;
+      this.failures = 0;
+      this.nextPollAt = Date.now() + pollingDelay(0);
     } catch (error) {
+      this.failures += 1;
+      this.nextPollAt =
+        Date.now() +
+        Math.max(
+          pollingDelay(this.failures),
+          error instanceof ApiRequestError ? error.retryAfterMs : 0,
+        );
       this.connectionIssue =
         error instanceof z.ZodError
           ? "API response does not match the documented contract."
@@ -407,9 +423,13 @@ export class ApiFleetService implements FleetService {
       throw new Error("This mission is no longer active.");
     this.mutating = true;
     try {
-      await this.request(`/tasks/${encodeURIComponent(taskId)}/cancel`, {
-        method: "POST",
-      });
+      await this.request(
+        `/tasks/${encodeURIComponent(taskId)}/cancel`,
+        {
+          method: "POST",
+        },
+        true,
+      );
       await this.refresh();
       // HTTP acceptance never changes local status to canceled; robot acknowledgment must do so.
     } finally {

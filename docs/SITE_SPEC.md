@@ -27,12 +27,13 @@ One configured robot is supported. No authentication, real fleet reservation, mu
 | `/missions`  | Missions  | Search, filters, pagination, details, CSV, timestamps and task events                                          |
 | `/analytics` | Analytics | Reporting period, timestamp-derived chart and mission performance                                              |
 | `/settings`  | Settings  | Mode/API configuration display, retry telemetry, scenarios, connection simulation, reset and integration notes |
+| `/logbook` | Logbook | Private local event filters, pagination, export, clear and recording preferences |
 
 Direct web URLs and reloads use per-route static HTML and clean URLs. Native deep links use the `pirate-native` scheme, for example `pirate-native://robots`. Normal navigation stays inside one FleetProvider so changing routes does not reset active work.
 
 ## Gazebo Enhancement
 
-Overview and Robots feature a colorful vector car/lane/obstacle concept diagram and violet/teal/coral/blue metric surfaces. Robots adds a disconnected Ackermann command-preview lab for `shapes` / `hatchback_blue`, using source wheelbase 2.5165 m, steering +/-0.45 rad, and speed 0.2-2 m/s. Preview controls never send network commands or move a real/simulated Gazebo entity. Atlas missions remain separate.
+Overview features a colorful vector car/lane/obstacle concept diagram; operational screens use violet/teal/coral/blue metric surfaces. Robots prioritizes a disconnected Ackermann command-preview lab for `shapes` / `hatchback_blue`, using source wheelbase 2.5165 m, steering +/-0.45 rad, and speed 0.2-2 m/s. Preview controls never send network commands or move a real/simulated Gazebo entity. Atlas missions remain separate.
 
 Ariel is a curated local guidance component available in Robots, Settings and Help. Optional GA4 web tracking requires an owner-supplied measurement ID and explicit consent. Static route metadata, robots rules, sitemap, image descriptions, visible keyboard focus and reduced-motion CSS support web presentation/accessibility. See [Gazebo Integration](GAZEBO_INTEGRATION.md) for architecture, proposed API schemas, privacy configuration and readiness criteria. No active Gazebo backend or external AI assistant is delivered.
 
@@ -40,8 +41,8 @@ Ariel is a curated local guidance component available in Robots, Settings and He
 
 - Brand: `pirate.` with orange anchor mark and BETA label.
 - Demo workspace: Acme Warehouse / Warehouse 01.
-- Demo operator: Felix. This is not an authenticated administrator or authorization claim.
-- Navigation: desktop sidebar at widths >=1050; otherwise five bottom destinations.
+- Operator label: Local operator / No account connected. This is not an authentication or authorization claim.
+- Navigation: desktop sidebar at widths >=1050; otherwise six bottom destinations.
 - Header: current workspace/screen, explicit SIMULATION or LIVE API badge, notifications and help.
 - Content: scrollable operational workspace with fixed navigation outside the scroll container.
 - Global notices: command outcome/errors, storage warnings and connection failures.
@@ -52,17 +53,17 @@ Ariel is a curated local guidance component available in Robots, Settings and He
 
 | Token             | Value                                      |
 | ----------------- | ------------------------------------------ |
-| Background        | `#f8f9fb`                                  |
+| Background        | `#f5f4fc`                                  |
 | Surface           | `#ffffff`                                  |
 | Primary text      | `#253246`                                  |
-| Secondary text    | `#697688`                                  |
-| Border            | `#e8ebef`                                  |
-| Primary orange    | `#e87b42`                                  |
-| Orange background | `#fff1e7`                                  |
+| Secondary text    | `#59657a`                                  |
+| Border            | `#e1e3ef`                                  |
+| Primary orange    | `#a44925`                                  |
+| Orange background | `#fff0e8`                                  |
 | Success           | `#397558`, soft `#e9f3ec`                  |
 | Error             | `#b44c48`                                  |
-| Card radius       | 11-12 map/native units                     |
-| Button radius     | 8                                          |
+| Card radius       | 18-24 map/native units                     |
+| Button radius     | 12                                         |
 | Touch controls    | Minimum 44 high; mobile navigation 56 high |
 
 System fonts avoid font downloads. Headings use bold slate type with an orange punctuation accent. Panels use thin borders and white surfaces. Metrics use large values, subdued context labels and lightweight icons.
@@ -159,7 +160,7 @@ Mission history is capped at 200 and events at 60. AsyncStorage writes are seria
 ## Live Transport Requirements
 
 - Public build-time URL selects the HTTP service; empty URL selects simulation.
-- Poll every two seconds on native and web.
+- Poll every two seconds on healthy native/web connections; failed reads back off to 30 seconds (60 with Retry-After). Live polling pauses in background.
 - Validate robots/tasks with Zod. No simulated fallback after live failure.
 - Heartbeat is authoritative robot telemetry. Older-than-ten-second or implausibly future timestamps block dispatch.
 - Requests time out at eight seconds.
@@ -187,7 +188,7 @@ Keyboard navigation and screen readers should be validated on final target devic
 
 | Original Next.js Feature                  | React Native Edition                                   |
 | ----------------------------------------- | ------------------------------------------------------ |
-| Five workspace tabs                       | Five routable screens/deep links                       |
+| Five original workspace tabs              | Six routable screens/deep links including local Logbook |
 | Desktop sidebar + mobile drawer           | Sidebar + persistent touch navigation                  |
 | Warehouse SVG and map tools               | Native-compatible SVG with same map frame and controls |
 | Dispatch/cancel/manual/scenarios          | Shared simulator and native controls                   |

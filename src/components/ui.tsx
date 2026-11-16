@@ -60,7 +60,7 @@ export function Button({
               : danger
                 ? colors.red
                 : selected
-                  ? "#bd5925"
+                  ? colors.orange
                   : colors.muted
           }
         />
@@ -71,7 +71,7 @@ export function Button({
             s.buttonText,
             primary && { color: "white" },
             danger && { color: colors.red },
-            selected && { color: "#bd5925" },
+            selected && { color: colors.orange },
           ]}
         >
           {label}
@@ -138,7 +138,7 @@ export function Badge({
             tone === "green"
               ? colors.green
               : tone === "orange"
-                ? "#bd5925"
+                ? colors.orange
                 : tone === "red"
                   ? colors.red
                   : colors.muted,
@@ -185,6 +185,7 @@ export const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    flexWrap: "wrap",
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,

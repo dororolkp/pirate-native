@@ -2,7 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "types": ["node", "react"]
+    "types": [
+      "node",
+      "react"
+    ]
   },
   "include": [
     "src/**/*.ts",
@@ -10,7 +13,12 @@
     "tests/**/*.ts",
     "*.ts",
     "*.tsx",
-    ".expo/types/**/*.ts"
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ],
-  "exclude": ["node_modules", "dist", "native-export"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "native-export"
+  ]
 }

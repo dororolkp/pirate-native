@@ -2,7 +2,15 @@
 
 Delivery date: **14 November 2026**.
 
-## Gazebo Enhancement Verification
+## Current Readiness Upgrade
+
+Implemented locally: six-destination UI with operations health and private Logbook; bounded read backoff/background pause; throttled routine persistence; fixed optional analytics events; static structured data/private-route SEO; and a backend-ready SQLite migration with enforced constraints/indexes.
+
+Local verification: **127 unit/hook/SQL/privacy tests and 28 desktop/mobile browser tests passed**, plus lint, TypeScript, web/iOS/Android bundle export, Expo Doctor 20/20 and a zero-vulnerability npm audit. Native binaries/device testing, live Gazebo, production SQL execution and actual GA4 collection are still not performed.
+
+Release commits and production deployments are tracked in GitHub Actions and the connected Vercel project. Confirm that the production alias is Ready for the intended commit before treating an upgrade as published; the verification history below describes earlier releases. Read [Production Readiness](PRODUCTION_READINESS.md) for current architecture, privacy boundaries and remaining activation work.
+
+## Earlier Gazebo Enhancement Verification
 
 The Gazebo enhancement adds a colorful driving-world diagram, idle Ackermann command previews, local Ariel guidance, modular-monolith contracts, static route SEO metadata and consent-gated GA4 web integration. Release commits and automated verification are tracked in the GitHub repository; the production website is published through its connected Vercel project. Consult GitHub Actions and Vercel deployment history for the current release status.
 
@@ -10,7 +18,7 @@ Verified locally: lint, TypeScript, 36 unit tests, 22 desktop/phone-browser test
 
 GA4 needs a real owner-supplied measurement ID, Enhanced Measurement disabled in Google, and user opt-in. Search Console submission and external analytics collection were not performed. The image-generation service returned a placeholder, so the delivered scene is a vector diagram with no external image dependency. Read [Gazebo Integration](GAZEBO_INTEGRATION.md) for API readiness and activation steps.
 
-## Delivered
+## Originally Delivered
 
 - New cross-platform Expo/React Native TypeScript implementation in `C:\Users\leekw\Documents\startupReactNative`.
 - Source reference inspected: `C:\Users\leekw\Documents\startup project\pirate`, original Next.js commit `d5b4f30`.
@@ -23,7 +31,7 @@ GA4 needs a real owner-supplied measurement ID, Enhanced Measurement disabled in
 - README, full site specification, API contract, build/deployment/usage guide, EAS profiles, Vercel configuration and Windows/Linux CI.
 - Local branded app icons/favicon; no external image or font service dependency.
 
-## Executed Verification
+## Original Release Verification
 
 | Check                                   | Result and Evidence                                                          |
 | --------------------------------------- | ---------------------------------------------------------------------------- |

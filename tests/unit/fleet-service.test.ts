@@ -200,3 +200,61 @@ describe("Asynchronous native and web persistence", () => {
     expect(saved.missions).toHaveLength(25);
   });
 });
+
+describe("Polling and persistence resource budgets", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+  it("keeps UI ticks responsive while throttling routine disk writes", async () => {
+    vi.useFakeTimers();
+    vi.mocked(AsyncStorage.getItem).mockResolvedValue(null);
+    vi.mocked(AsyncStorage.setItem).mockReset().mockResolvedValue();
+    const listener = vi.fn();
+    const service = new DemoFleetService();
+    const stop = service.subscribe(listener);
+    try {
+      await service.refresh();
+      const baseline = vi.mocked(AsyncStorage.setItem).mock.calls.length;
+      await vi.advanceTimersByTimeAsync(12_000);
+      expect(listener.mock.calls.length).toBeGreaterThanOrEqual(24);
+      expect(
+        vi.mocked(AsyncStorage.setItem).mock.calls.length - baseline,
+      ).toBeLessThanOrEqual(3);
+      const previous = vi.mocked(AsyncStorage.setItem).mock.calls.length;
+      await service.dispatch("station_b");
+      expect(vi.mocked(AsyncStorage.setItem).mock.calls.length).toBe(
+        previous + 1,
+      );
+    } finally {
+      stop();
+    }
+  });
+  it("backs off failed polling, recovers and pauses in the background", async () => {
+    vi.useFakeTimers();
+    const robot = createDemo().robot;
+    const fetcher = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockImplementation(() => response([robot]));
+    vi.stubGlobal("fetch", fetcher);
+    const service = new ApiFleetService("https://robot.example");
+    const stop = service.subscribe(() => {});
+    try {
+      await service.refresh();
+      expect(fetcher).toHaveBeenCalledOnce();
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(fetcher).toHaveBeenCalledOnce();
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      service.setActive(false);
+      await vi.advanceTimersByTimeAsync(20_000);
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      service.setActive(true);
+      await service.refresh();
+      expect(fetcher).toHaveBeenCalledTimes(3);
+    } finally {
+      stop();
+    }
+  });
+});

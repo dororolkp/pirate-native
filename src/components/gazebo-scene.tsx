@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Svg, {
   Circle,
   Defs,
@@ -11,12 +12,12 @@ import Svg, {
 } from "react-native-svg";
 
 // A diagram of the source world's car/obstacle interaction, not a live pose or image resource.
-export function GazeboScene() {
+export const GazeboScene = memo(function GazeboScene() {
   return (
     <Svg
       viewBox="0 0 520 310"
       width="100%"
-      height={260}
+      height="100%"
       accessibilityRole="image"
       accessibilityLabel="Concept diagram: blue hatchback on a curved test lane with teal and coral obstacles. Not live telemetry."
     >
@@ -97,4 +98,4 @@ export function GazeboScene() {
       </SvgText>
     </Svg>
   );
-}
+});

@@ -21,6 +21,14 @@ Web now exports static route HTML with titles, canonical/Open Graph/Twitter meta
 
 Read [Gazebo Integration and Architecture](docs/GAZEBO_INTEGRATION.md) for verified source settings, proposed backend contracts, safety boundaries, accessibility and privacy configuration.
 
+## Professional Readiness Upgrade
+
+Operations status, a responsive six-destination workspace, clearer content and keyboard skip navigation now accompany the driving lab. **Logbook** provides filtered, exportable, seven-day local history with clear/disable controls. It never uploads robot data or its records.
+
+Live reads use bounded outage backoff and pause while backgrounded; demo commands still save immediately while routine disk writes are throttled. Optional GA4 supports only public page views and fixed help/chart/export events after consent; Settings and Logbook are excluded.
+
+The modular-monolith boundaries and tested future SQLite migration are documented in [Production Readiness](docs/PRODUCTION_READINESS.md). SQL is not connected to the client or a running backend. Use `npm run test:sql` to validate it, and `npm run test:hooks` to check all hook modules.
+
 ## Delivery Status
 
 Web production export and web/iOS/Android JavaScript bundles can be built in this repository. **Exported native bundles are not APK, AAB, IPA, or installable apps.** Signed native builds and store releases need an authenticated Expo account and platform signing/store credentials. See [Delivery Status](docs/DELIVERY_STATUS.md) for verified results and outstanding work.
@@ -134,7 +142,7 @@ EXPO_PUBLIC_ROBOT_ID=robot_01
 
 Use an empty API URL for the demo. Restart Metro with `npx expo start --clear`, or rebuild/deploy after changing settings. `EXPO_PUBLIC_*` values are compiled into the client and are **not secrets**.
 
-Native and web poll every two seconds, validate JSON with Zod, and disable dispatch if robot heartbeat is older than ten seconds, disconnected, busy, manual, or unavailable. Requests have an eight-second deadline. Commands are not automatically retried; ambiguous creation replies lock dispatch for the session until the operator reconciles the backend before restarting. Live cancellation stays active until backend status reports `canceled`.
+Healthy native and web connections poll every two seconds, validate JSON with Zod, and disable dispatch if robot heartbeat is older than ten seconds, disconnected, busy, manual, or unavailable. Failed reads back off up to 30 seconds (up to 60 seconds for Retry-After); live polling pauses in background. Requests have an eight-second deadline. Commands are not automatically retried; ambiguous creation replies lock dispatch for the session until the operator reconciles the backend before restarting. Live cancellation stays active until backend status reports `canceled`.
 
 Use HTTPS for deployed/mobile integrations. A phone's `localhost` is the phone, not your computer. No login/auth protocol was supplied by the original API; do not publish real robot controls without agreed authentication, authorization, audit logging, network isolation and robot-side stopping. Live manual teleoperation and global/history task discovery are intentionally unavailable.
 
@@ -145,6 +153,9 @@ See [API Contract](docs/API_CONTRACT.md) for payloads, CORS, emulator addresses,
 ```bash
 # ESLint, TypeScript, unit/adapter tests, production web export.
 npm run check
+
+# Run only the React hook/provider behavior tests.
+npm run test:hooks
 
 # Install Chromium once and run desktop + phone-browser acceptance tests.
 npx playwright install chromium
@@ -160,6 +171,8 @@ npm run generate:icons
 ```
 
 Browser tests run against the production export in demo mode. Stop another server on port 8081 before testing, or set `TEST_BASE_URL` to a running preview. Traces and QA screenshots are written to your OS temporary directory. TypeScript 6/Vitest assertion types need a larger Node stack here; `typecheck` supplies it and still checks source and tests.
+
+Hook tests use Vitest, React Testing Library and jsdom with mocked React Native APIs and fleet services. `use-fleet.test.ts` covers the internal controller through `FleetProvider` and `useFleet`: service selection, telemetry/clock updates, command forwarding and notices, pending-command exclusivity, errors/recovery, AppState behavior, shared context and unmount cleanup. `use-layout-width.test.ts` covers browser resizing, iOS/Android dimension selection, static HTML hydration and subscription cleanup including Strict Mode. `use-logbook.test.ts` checks local-store hydration, updates, cleanup and private server-rendering boundaries. These exercise real React lifecycles, not physical devices or a live backend; service implementations are covered separately by adapter/domain tests. `npm test` and CI include the hook tests automatically.
 
 Scoped npm overrides replace vulnerable `minimatch` transitive versions for Expo fingerprinting and TypeScript ESLint with 11.0.8+. Do not use `npm audit fix --force`: its suggested Expo downgrade would break SDK compatibility. Review overrides when upgrading Expo.
 

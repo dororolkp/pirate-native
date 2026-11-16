@@ -6,15 +6,15 @@ Reference: https://github.com/painpongpoint/Gazebo-Simulator at commit `b0f69479
 
 The repository supplies a Python/Tk control panel and Gazebo transport, not REST, WebSocket, ROS, authentication, camera streaming, or a deployable web backend. Requirements are Ubuntu 24.04 (or its WSL distribution), Gazebo Harmonic / Sim 8, transport13, msgs10 and python3-tk. Its included hatchback uses physical collision shapes and Ackermann steering.
 
-| Source setting | Value |
-| --- | --- |
-| World / model | `shapes` / `hatchback_blue` |
-| Velocity topic | `/model/hatchback_blue/cmd_vel` (`Twist`) |
-| Pose topic | `/world/shapes/pose/info` (`Pose_V`) |
-| Wheelbase | 2.5165 meters |
-| Steering limit | +/-0.45 radians |
-| Requested speed | 0.2 to 2.0 m/s |
-| Source command cadence | 50 ms |
+| Source setting         | Value                                     |
+| ---------------------- | ----------------------------------------- |
+| World / model          | `shapes` / `hatchback_blue`               |
+| Velocity topic         | `/model/hatchback_blue/cmd_vel` (`Twist`) |
+| Pose topic             | `/world/shapes/pose/info` (`Pose_V`)      |
+| Wheelbase              | 2.5165 meters                             |
+| Steering limit         | +/-0.45 radians                           |
+| Requested speed        | 0.2 to 2.0 m/s                            |
+| Source command cadence | 50 ms                                     |
 
 `linear.x = requested signed speed`; `angular.z = speed * tan(steering) / 2.5165`. Steering is not sideways movement. Turning requires motion; stopping has a braking distance.
 
@@ -32,13 +32,13 @@ Atlas missions are still the independent warehouse demonstration. Their 800 x 39
 
 Agree these proposed endpoints with the backend owner before implementing:
 
-| Proposed endpoint | Responsibility |
-| --- | --- |
-| `GET /api/v1/simulator/status` | World/model, connectivity and capabilities |
-| `GET /api/v1/simulator/telemetry` | Validated pose, world frame, meters, authoritative timestamp |
-| `POST /api/v1/simulator/control/lease` | Authenticated exclusive operator lease |
-| `POST /api/v1/simulator/control/commands` | Leased, sequenced velocity command and acknowledgment |
-| `DELETE /api/v1/simulator/control/lease` | Revoke lease and request zero velocity |
+| Proposed endpoint                         | Responsibility                                               |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| `GET /api/v1/simulator/status`            | World/model, connectivity and capabilities                   |
+| `GET /api/v1/simulator/telemetry`         | Validated pose, world frame, meters, authoritative timestamp |
+| `POST /api/v1/simulator/control/lease`    | Authenticated exclusive operator lease                       |
+| `POST /api/v1/simulator/control/commands` | Leased, sequenced velocity command and acknowledgment        |
+| `DELETE /api/v1/simulator/control/lease`  | Revoke lease and request zero velocity                       |
 
 Example command DTO (future lease sent separately using an authenticated session):
 
@@ -87,7 +87,7 @@ Components depend on domain contracts, not the reverse. Add the real gateway ins
 
 ## SEO, Analytics and Accessibility
 
-Web uses Expo Router **static output** with per-route title, description, canonical, Open Graph/Twitter metadata, English document language, robots rules and sitemap. Static HTML contains public introduction content; private local fleet records hydrate only in the browser. Settings is noindex. Vercel uses clean URLs, not the old SPA rewrite. Metadata URLs are pinned to the production domain; update them and the sitemap when changing domains. Submit `/sitemap.xml` in Search Console after deployment. Ranking and indexing are not guaranteed.
+Web uses Expo Router **static output** with per-route title, description, canonical, Open Graph/Twitter metadata, English document language, robots rules and sitemap. Static HTML contains public introduction content; private local fleet records hydrate only in the browser. Settings and Logbook are noindex. Vercel uses clean URLs, not the old SPA rewrite. Metadata URLs are pinned to the production domain; update them and the sitemap when changing domains. Submit `/sitemap.xml` in Search Console after deployment. Ranking and indexing are not guaranteed.
 
 SDK 58 route exports use `generateMetadata()` for initial HTML and `Head` for client navigation updates. Custom HTML renders `useServerDocumentContext()` head/body nodes so styles and hydration scripts are retained. Responsive web layouts use a hydration-stable initial viewport. Social cards use text summaries; no unavailable or placeholder social image is published. The image-generation service returned a placeholder during QA, so the delivered scene uses a purpose-built SVG diagram and makes no external image requests.
 
@@ -101,6 +101,8 @@ For Google Analytics:
 6. Select Keep analytics off to disable further tracking. Clear site cookies/storage to remove existing GA identifiers; opting out cannot erase already processed Google data.
 
 No Google script/request is initiated before explicit opt-in. Advertising consent is denied; no commands, robot telemetry, mission IDs, user IDs or Ariel questions are intentionally tracked. Google still receives browser/device information after consent, so this is not a claim of full anonymity. Existing code assumes Enhanced Measurement stays disabled. No actual measurement ID was supplied; analytics collection is unconfigured until the owner sets one. Native analytics is intentionally absent.
+
+The readiness upgrade adds fixed public help/chart/export events, a separate private local Logbook, read backoff and tested SQL design. Settings and Logbook are excluded from page tracking. See [Production Readiness](PRODUCTION_READINESS.md) for current module boundaries, retention, SQL constraints and release requirements.
 
 Native semantics and web ARIA include labeled controls, selected/disabled states, live status, modal semantics, image descriptions, >=44-unit touch targets, visible keyboard focus and reduced-motion CSS. Keyboard preview capture is opt-in and skips input fields. This is implementation support, not a certified WCAG audit; physical device and screen-reader testing remain required.
 

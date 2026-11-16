@@ -15,6 +15,13 @@ import {
   FleetService,
 } from "../lib/fleet-service";
 import { FleetSnapshot, StationId } from "../lib/fleet-domain";
+import { activityStore, ActivityCode } from "../lib/activity-store";
+
+function record(code: ActivityCode, outcome: "ok" | "failed" | "info") {
+  void activityStore
+    .record(code, outcome, API_BASE ? "live" : "demo")
+    .catch(() => undefined);
+}
 
 function useFleetController() {
   const [snapshot, setSnapshot] = useState<FleetSnapshot | null>(null);
@@ -29,12 +36,34 @@ function useFleetController() {
   const mounted = useRef(false);
   useEffect(() => {
     mounted.current = true;
-    const instance = API_BASE
+    let alive = true;
+    let previousIssue: boolean | undefined;
+    let previousTasks = new Map<string, string>();
+    record("workspace_opened", "info");
+    const instance: FleetService = API_BASE
       ? new ApiFleetService(API_BASE)
       : new DemoFleetService();
     service.current = instance;
     const stop = instance.subscribe((data, issue) => {
-      if (!mounted.current) return;
+      if (!alive) return;
+      const unhealthy = Boolean(API_BASE && issue);
+      if (previousIssue !== undefined && previousIssue !== unhealthy)
+        record(
+          unhealthy ? "telemetry_unavailable" : "telemetry_recovered",
+          unhealthy ? "failed" : "ok",
+        );
+      previousIssue = unhealthy;
+      for (const task of data.missions) {
+        const previous = previousTasks.get(task.task_id);
+        if (previous && previous !== task.status && task.status !== "queued")
+          record(
+            `mission_${task.status}` as ActivityCode,
+            task.status === "failed" ? "failed" : "ok",
+          );
+      }
+      previousTasks = new Map(
+        data.missions.map((task) => [task.task_id, task.status]),
+      );
       setSnapshot(data);
       setNow(Date.now());
       setConnectionError(Boolean(API_BASE && issue));
@@ -42,12 +71,24 @@ function useFleetController() {
     });
     const clock = setInterval(() => setNow(Date.now()), 1000);
     const appState = AppState.addEventListener("change", (state) => {
-      if (state === "active") void instance.refresh();
+      instance.setActive?.(state === "active");
+      const update =
+        state === "active"
+          ? instance.refresh()
+          : !API_BASE
+            ? instance.demo("manual-off")
+            : undefined;
       // Never retain demo manual mode when the app is backgrounded.
-      else if (!API_BASE) void instance.demo("manual-off");
+      void update?.catch(() => {
+        if (alive)
+          setError(
+            "Workspace update failed. Refresh telemetry before continuing.",
+          );
+      });
     });
     return () => {
       mounted.current = false;
+      alive = false;
       stop();
       clearInterval(clock);
       appState.remove();
@@ -57,6 +98,7 @@ function useFleetController() {
   async function act(
     action: (instance: FleetService) => Promise<void>,
     success: string,
+    code: ActivityCode,
   ) {
     if (!service.current || busy.current) return false;
     busy.current = true;
@@ -65,9 +107,11 @@ function useFleetController() {
     setNotice(null);
     try {
       await action(service.current);
+      record(code, "ok");
       if (mounted.current) setNotice(success);
       return true;
     } catch (issue) {
+      record(code, "failed");
       if (mounted.current)
         setError(
           issue instanceof Error
@@ -97,6 +141,7 @@ function useFleetController() {
       act(
         (s) => s.dispatch(destination),
         "Mission accepted. Follow its progress on the map.",
+        "mission_dispatch",
       ),
     cancel: (id: string) =>
       act(
@@ -104,6 +149,7 @@ function useFleetController() {
         API_BASE
           ? "Cancellation requested. Waiting for backend acknowledgment."
           : "Mission canceled. Simulated motion stopped.",
+        "mission_cancel",
       ),
     demo: (command: DemoCommand) =>
       act(
@@ -111,8 +157,14 @@ function useFleetController() {
         command === "reset"
           ? "Demo reset. Sample missions restored."
           : "Simulation updated.",
+        "demo_control",
       ),
-    refresh: () => act((s) => s.refresh(), "Telemetry refresh requested."),
+    refresh: () =>
+      act(
+        (s) => s.refresh(),
+        "Telemetry refresh requested.",
+        "telemetry_refresh",
+      ),
   };
 }
 export type FleetController = ReturnType<typeof useFleetController>;

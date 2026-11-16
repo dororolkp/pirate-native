@@ -102,7 +102,7 @@ Any successful JSON acknowledgment or empty success body is tolerated. **HTTP su
 
 ## Polling and Events
 
-The client polls authoritative snapshots every two seconds, and refreshes on app resume. Requests abort after eight seconds. Concurrent refresh requests are coalesced. Accepted task IDs cannot be overwritten by an older in-flight telemetry result.
+The client polls healthy authoritative snapshots every two seconds and refreshes on app resume. Failed reads back off to 4, 8, 16 and 30 seconds; a valid Retry-After header can extend the delay up to 60 seconds. Live polling pauses while backgrounded. Manual refresh bypasses the schedule delay but still coalesces with an in-flight read. Requests abort after eight seconds. Accepted task IDs cannot be overwritten by an older in-flight telemetry result. No automatic mutation retry is introduced by this read-backoff policy.
 
 The original backend's SSE `/api/v1/events` endpoint may remain available to other clients. Pirate Native does not depend on EventSource or consume raw SSE payloads. Its timeline records local simulator events and observed backend task status transitions; it is not a full backend audit log.
 

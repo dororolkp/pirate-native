@@ -1,9 +1,13 @@
-import { useState } from "react";
-import { Text, TextInput, View, useWindowDimensions } from "react-native";
+import { useMemo, useState } from "react";
+import { Text, TextInput, View } from "react-native";
 import { Download, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { FleetEvent, Mission, STATIONS, TaskStatus } from "../lib/fleet-domain";
 import { exportMissions } from "../lib/export-missions";
 import { Badge, Button, colors, Panel, s } from "./ui";
+import { useLayoutWidth } from "../hooks/use-layout-width";
+import { activityStore } from "../lib/activity-store";
+import { API_BASE } from "../lib/fleet-service";
+import { trackPublicEvent } from "../lib/analytics";
 
 export const statusTone = (status: TaskStatus) =>
   status === "completed"
@@ -22,17 +26,22 @@ export function MissionHistory({
   viewMission: (mission: Mission) => void;
   compact?: boolean;
 }) {
-  const { width } = useWindowDimensions();
+  const width = useLayoutWidth();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(0);
   const [error, setError] = useState("");
-  const results = missions.filter(
-    (m) =>
-      (filter === "all" || m.status === filter) &&
-      `${m.task_id} ${m.robot_id} ${STATIONS[m.destination].label} ${m.status}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
+  const normalizedSearch = search.trim().toLowerCase();
+  const results = useMemo(
+    () =>
+      missions.filter(
+        (m) =>
+          (filter === "all" || m.status === filter) &&
+          `${m.task_id} ${m.robot_id} ${STATIONS[m.destination].label} ${m.status}`
+            .toLowerCase()
+            .includes(normalizedSearch),
+      ),
+    [missions, filter, normalizedSearch],
   );
   const size = compact ? 5 : 8;
   const lastPage = Math.max(0, Math.ceil(results.length / size) - 1);
@@ -41,6 +50,10 @@ export function MissionHistory({
   async function download() {
     try {
       await exportMissions(results);
+      trackPublicEvent("mission_history_exported");
+      void activityStore
+        .record("history_export", "ok", API_BASE ? "live" : "demo")
+        .catch(() => undefined);
       setError("");
     } catch (issue) {
       setError(issue instanceof Error ? issue.message : "Export failed.");

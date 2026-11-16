@@ -13,6 +13,7 @@ import {
   BarChart3,
   Bell,
   Bot,
+  BookOpen,
   CircleHelp,
   Flag,
   LayoutDashboard,
@@ -28,12 +29,14 @@ import { Badge, Button, colors, s } from "./ui";
 import { WebPresence } from "./web-presence";
 import { ArielAssistant } from "./ariel-assistant";
 import { useLayoutWidth } from "../hooks/use-layout-width";
+import { trackPublicEvent } from "../lib/analytics";
 
 const navigation = [
   { label: "Overview", href: "/" as const, icon: LayoutDashboard },
   { label: "Robots", href: "/robots" as const, icon: Bot },
   { label: "Missions", href: "/missions" as const, icon: Flag },
   { label: "Analytics", href: "/analytics" as const, icon: BarChart3 },
+  { label: "Logbook", href: "/logbook" as const, icon: BookOpen },
   { label: "Settings", href: "/settings" as const, icon: Settings2 },
 ];
 export function Dialog({
@@ -92,6 +95,10 @@ export function FleetShell() {
   const desktop = width >= 1050;
   const [activity, setActivity] = useState(false);
   const [help, setHelp] = useState(false);
+  const openHelp = () => {
+    trackPublicEvent("help_opened");
+    setHelp(true);
+  };
   const tab =
     navigation.find((item) => item.href === path)?.label ?? "Overview";
   const nav = (mobile = false) =>
@@ -110,11 +117,11 @@ export function FleetShell() {
           >
             <Icon
               size={mobile ? 20 : 18}
-              color={selected ? "#c4612f" : colors.muted}
+              color={selected ? colors.orange : colors.muted}
             />
             <Text
               style={{
-                color: selected ? "#c4612f" : colors.muted,
+                color: selected ? colors.orange : colors.muted,
                 fontSize: mobile ? 10 : 13,
                 fontWeight: selected ? "700" : "500",
               }}
@@ -186,12 +193,12 @@ export function FleetShell() {
                 Explore Gazebo previews. Backend stays idle until the gateway is
                 ready.
               </Text>
-              <Button label="Explore the demo" onPress={() => setHelp(true)} />
+              <Button label="Explore the demo" onPress={openHelp} />
             </View>
             <Button
               label="Help & documentation"
               icon={CircleHelp}
-              onPress={() => setHelp(true)}
+              onPress={openHelp}
             />
             <View
               style={[
@@ -205,11 +212,13 @@ export function FleetShell() {
               ]}
             >
               <View style={styles.avatar}>
-                <Text style={{ color: "#a55b37", fontWeight: "700" }}>FL</Text>
+                <Text style={{ color: "#a55b37", fontWeight: "700" }}>LO</Text>
               </View>
               <View>
-                <Text style={[s.text, { fontWeight: "700" }]}>Felix</Text>
-                <Text style={s.caption}>Demo operator</Text>
+                <Text style={[s.text, { fontWeight: "700" }]}>
+                  Local operator
+                </Text>
+                <Text style={s.caption}>No account connected</Text>
               </View>
             </View>
           </View>
@@ -250,7 +259,7 @@ export function FleetShell() {
                 label="Help"
                 icon={CircleHelp}
                 compact={width < 600}
-                onPress={() => setHelp(true)}
+                onPress={openHelp}
               />
             </View>
           </View>
@@ -288,6 +297,9 @@ export function FleetShell() {
             }}
           >
             <View
+              nativeID="main-content"
+              role="main"
+              tabIndex={-1}
               style={{ width: "100%", maxWidth: 1600, alignSelf: "center" }}
             >
               <Slot />
@@ -326,6 +338,10 @@ export function FleetShell() {
         <Text style={s.text}>
           4. In Missions, filter records, inspect timestamps, and export CSV.
           Analytics shows timestamp-derived results.
+        </Text>
+        <Text style={s.text}>
+          5. Logbook keeps a private, seven-day record on this device. Filter,
+          export, clear or disable recording anytime.
         </Text>
         <Text style={[s.text, { color: colors.red }]}>
           Demo data is simulated. These controls are not physical emergency

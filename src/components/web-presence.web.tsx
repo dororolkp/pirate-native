@@ -4,29 +4,18 @@ import { usePathname } from "expo-router";
 import Head from "expo-router/head";
 import { Button, Panel, s } from "./ui";
 import { SITE_ROUTES as routes } from "../lib/site-metadata";
-const measurement = process.env.EXPO_PUBLIC_GA_MEASUREMENT_ID ?? "";
-const validMeasurement = /^G-[A-Z0-9]+$/.test(measurement);
-const CONSENT_KEY = "pirate-analytics-consent-v1";
-type AnalyticsWindow = Window & {
-  dataLayer?: unknown[];
-  gtag?: (...args: unknown[]) => void;
-};
-
-function consent(): boolean {
-  try {
-    return localStorage.getItem(CONSENT_KEY) === "granted";
-  } catch {
-    return false;
-  }
-}
-function subscribeConsent(update: () => void) {
-  window.addEventListener("pirate-consent", update);
-  window.addEventListener("storage", update);
-  return () => {
-    window.removeEventListener("pirate-consent", update);
-    window.removeEventListener("storage", update);
-  };
-}
+import {
+  analyticsAllowed as consent,
+  subscribeConsent,
+  measurement,
+  validMeasurement,
+  AnalyticsWindow,
+  clearAnalyticsCookies,
+} from "../lib/analytics.web";
+import {
+  ANALYTICS_CONSENT_KEY as CONSENT_KEY,
+  PUBLIC_ANALYTICS_PATHS,
+} from "../lib/analytics-events";
 const serverConsent = () => false;
 
 export function WebPresence() {
@@ -60,21 +49,26 @@ export function WebPresence() {
       send_page_view: false,
       allow_google_signals: false,
       allow_ad_personalization_signals: false,
+      page_location: "https://pirate-native.vercel.app/",
+      page_title: "Pirate workspace",
+      page_referrer: "",
     });
     const script = document.createElement("script");
     script.async = true;
+    script.referrerPolicy = "no-referrer";
     script.src = `https://www.googletagmanager.com/gtag/js?id=${measurement}`;
     document.head.appendChild(script);
     return () => {
       analytics.gtag?.("consent", "update", { analytics_storage: "denied" });
       flags[`ga-disable-${measurement}`] = true;
       script.remove();
+      clearAnalyticsCookies();
     };
   }, [allowed]);
   useEffect(() => {
     if (!allowed || !validMeasurement) return;
     // Fixed route names only: omit query strings, user IDs, pose, missions and commands.
-    if (routes[path])
+    if (PUBLIC_ANALYTICS_PATHS.some((route) => route === path))
       (window as AnalyticsWindow).gtag?.("event", "page_view", {
         page_title: `${title} | Pirate`,
         page_location: canonical,
@@ -89,7 +83,9 @@ export function WebPresence() {
       <meta
         name="robots"
         content={
-          path === "/settings" || !(path in routes)
+          path === "/settings" ||
+          path === "/logbook" ||
+          !Object.hasOwn(routes, path)
             ? "noindex, follow"
             : "index, follow"
         }
@@ -135,10 +131,11 @@ export function AnalyticsPreferences() {
             : "Analytics is not configured. Add a real GA4 measurement ID before deployment."}
         </Text>
         <Text style={s.caption}>
-          Only public page views are sent. No robot poses, control commands,
-          mission IDs, assistant questions or account identifiers. Google may
-          process browser/device data after opt-in. Native apps do not include
-          Google Analytics.
+          Only public page views and allowlisted help, chart-style and
+          mission-export interactions are sent. Settings and Logbook are
+          excluded. No robot poses, control commands, mission IDs, assistant
+          questions or account identifiers. Google may process browser/device
+          data after opt-in. Native apps do not include Google Analytics.
         </Text>
         <View style={s.row}>
           <Button

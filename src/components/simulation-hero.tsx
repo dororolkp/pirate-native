@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { Text, View } from "react-native";
 import { Badge, colors, s } from "./ui";
 import { GazeboScene } from "./gazebo-scene";
 import { useLayoutWidth } from "../hooks/use-layout-width";
 
-export function SimulationHero() {
+export const SimulationHero = memo(function SimulationHero() {
   const width = useLayoutWidth();
   return (
     <View
@@ -14,7 +15,7 @@ export function SimulationHero() {
         flexDirection: width > 850 ? "row" : "column",
       }}
     >
-      <View style={{ flex: 1, padding: 28, gap: 14 }}>
+      <View style={{ flex: 1, padding: width < 600 ? 20 : 28, gap: 14 }}>
         <Badge label="PIRATE + GAZEBO / DRIVING LAB" />
         <Text
           accessibilityRole="header"
@@ -26,11 +27,12 @@ export function SimulationHero() {
             lineHeight: 36,
           }}
         >
-          Big ideas. Small car.{"\n"}Your next move starts here.
+          Plan with confidence.{"\n"}Practice without risk.
         </Text>
         <Text style={[s.text, { color: "#493f70", maxWidth: 460 }]}>
-          Explore motion, steering, and mission planning in one colorful
-          workspace. Prepare for Gazebo Harmonic without connecting a backend.
+          One focused workspace for warehouse missions, fleet insights and
+          Gazebo driving previews. Start locally; connect an approved gateway
+          when it is ready.
         </Text>
         <View style={s.row}>
           {["Ackermann steering", "Touch + keyboard", "Backend idle"].map(
@@ -46,7 +48,7 @@ export function SimulationHero() {
       <View
         style={{
           width: width > 850 ? "42%" : "100%",
-          height: 260,
+          height: width < 600 ? 200 : 260,
           alignSelf: "center",
         }}
       >
@@ -54,4 +56,4 @@ export function SimulationHero() {
       </View>
     </View>
   );
-}
+});

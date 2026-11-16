@@ -35,8 +35,11 @@ import { GazeboDrivingLab } from "./gazebo-driving-lab";
 import { ArielAssistant } from "./ariel-assistant";
 import { AnalyticsPreferences } from "./web-presence";
 import { useLayoutWidth } from "../hooks/use-layout-width";
+import { Logbook } from "./logbook";
+import { WorkspaceHealth } from "./workspace-health";
 
-type Tab = "Overview" | "Robots" | "Missions" | "Analytics" | "Settings";
+type Tab =
+  "Overview" | "Robots" | "Missions" | "Analytics" | "Settings" | "Logbook";
 const headings = {
   Overview: [
     "Fleet overview",
@@ -58,6 +61,10 @@ const headings = {
     "Workspace settings",
     "Your simulation, connection, and integration essentials.",
   ],
+  Logbook: [
+    "Workspace logbook",
+    "A clear, private record of local requests and observed outcomes.",
+  ],
 };
 export function FleetScreen({ tab }: { tab: Tab }) {
   const fleet = useFleet();
@@ -74,6 +81,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
       <View style={s.stack}>
         <Text
           accessibilityRole="header"
+          aria-level={1}
           style={{ color: colors.ink, fontSize: 30, fontWeight: "700" }}
         >
           {headings[tab][0]}
@@ -139,6 +147,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           </Text>
           <Text
             accessibilityRole="header"
+            aria-level={1}
             style={{
               fontSize: width < 600 ? 29 : 34,
               fontWeight: "700",
@@ -153,7 +162,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
             {headings[tab][1]}
           </Text>
         </View>
-        {tab !== "Settings" && (
+        {tab !== "Settings" && tab !== "Logbook" && (
           <Button
             label="New mission"
             primary
@@ -168,7 +177,9 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           />
         )}
       </View>
-      {(tab === "Overview" || tab === "Robots") && <SimulationHero />}
+      <WorkspaceHealth fleet={fleet} />
+      {tab === "Overview" && <SimulationHero />}
+      {tab === "Logbook" && <Logbook />}
       <View
         style={[
           s.row,
@@ -191,7 +202,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
             : "This workspace is a simulation. No physical robot is controlled. Includes 24 seeded sample missions."}
         </Text>
       </View>
-      {tab !== "Settings" && (
+      {tab !== "Settings" && tab !== "Logbook" && (
         <View style={[s.row, { justifyContent: "space-between" }]}>
           <Text style={s.label}>REPORTING PERIOD</Text>
           <View style={s.row}>
@@ -210,7 +221,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           </View>
         </View>
       )}
-      {tab !== "Settings" && (
+      {tab !== "Settings" && tab !== "Logbook" && (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 14 }}>
           {[
             {
@@ -349,10 +360,12 @@ export function FleetScreen({ tab }: { tab: Tab }) {
                 onPress={() => void fleet.refresh()}
               />
               <Text style={s.caption}>
-                Native and web poll every two seconds. Stale robot heartbeats
-                block dispatch after ten seconds. Physical map conversion,
-                authentication and stopping belong to the backend and robot
-                adapter.
+                Healthy native and web connections poll every two seconds.
+                Failed reads back off up to 30 seconds (up to 60 seconds for
+                Retry-After). Live polling pauses while backgrounded. Stale
+                robot heartbeats block dispatch after ten seconds. Physical map
+                conversion, authentication and stopping belong to the backend
+                and robot adapter.
               </Text>
             </View>
           </Panel>

@@ -10,6 +10,7 @@ import Svg, {
 import { BarChart3, TrendingUp } from "lucide-react-native";
 import { fleetMetrics, hourlyActivity, Mission } from "../lib/fleet-domain";
 import { Badge, Button, colors, Panel, s } from "./ui";
+import { trackPublicEvent } from "../lib/analytics";
 
 export function MissionAnalytics({
   missions,
@@ -54,13 +55,19 @@ export function MissionAnalytics({
               label="Bar chart"
               icon={BarChart3}
               selected={chart === "bar"}
-              onPress={() => setChart("bar")}
+              onPress={() => {
+                setChart("bar");
+                trackPublicEvent("chart_style_changed");
+              }}
             />
             <Button
               label="Line chart"
               icon={TrendingUp}
               selected={chart === "line"}
-              onPress={() => setChart("line")}
+              onPress={() => {
+                setChart("line");
+                trackPublicEvent("chart_style_changed");
+              }}
             />
           </View>
         </View>
