@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View, useWindowDimensions } from "react-native";
+import { Text, View } from "react-native";
 import {
   Bot,
   CheckCircle2,
@@ -30,6 +30,11 @@ import {
   statusTone,
 } from "./mission-history";
 import { Dialog } from "./fleet-shell";
+import { SimulationHero } from "./simulation-hero";
+import { GazeboDrivingLab } from "./gazebo-driving-lab";
+import { ArielAssistant } from "./ariel-assistant";
+import { AnalyticsPreferences } from "./web-presence";
+import { useLayoutWidth } from "../hooks/use-layout-width";
 
 type Tab = "Overview" | "Robots" | "Missions" | "Analytics" | "Settings";
 const headings = {
@@ -56,7 +61,7 @@ const headings = {
 };
 export function FleetScreen({ tab }: { tab: Tab }) {
   const fleet = useFleet();
-  const { width } = useWindowDimensions();
+  const width = useLayoutWidth();
   const wide = width >= 1250;
   const [period, setPeriod] = useState("all");
   const [dispatchOpen, setDispatchOpen] = useState(false);
@@ -64,7 +69,22 @@ export function FleetScreen({ tab }: { tab: Tab }) {
   const [selected, setSelected] = useState<Mission | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const snapshot = fleet.snapshot;
-  if (!snapshot) return null;
+  if (!snapshot)
+    return (
+      <View style={s.stack}>
+        <Text
+          accessibilityRole="header"
+          style={{ color: colors.ink, fontSize: 30, fontWeight: "700" }}
+        >
+          {headings[tab][0]}
+        </Text>
+        <Text style={s.text}>{headings[tab][1]}</Text>
+        {(tab === "Overview" || tab === "Robots") && <SimulationHero />}
+        <Text style={s.caption}>
+          Loading local workspace. Gazebo backend remains idle.
+        </Text>
+      </View>
+    );
   const task = activeMission(snapshot);
   const start =
     period === "all"
@@ -148,6 +168,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           />
         )}
       </View>
+      {(tab === "Overview" || tab === "Robots") && <SimulationHero />}
       <View
         style={[
           s.row,
@@ -221,23 +242,28 @@ export function FleetScreen({ tab }: { tab: Tab }) {
               note: "Terminal mission outcomes",
               icon: TrendingUp,
             },
-          ].map(({ label, value, note, icon: Icon }) => (
+          ].map(({ label, value, note, icon: Icon }, index) => (
             <View
               key={label}
               style={{
                 flexGrow: 1,
                 flexBasis: width < 600 ? "45%" : "21%",
-                backgroundColor: "white",
+                backgroundColor: ["#eeebff", "#e5f4ef", "#fff0e6", "#e8f0ff"][
+                  index
+                ],
                 padding: 20,
                 borderWidth: 1,
                 borderColor: colors.border,
-                borderRadius: 11,
+                borderRadius: 18,
                 gap: 12,
               }}
             >
               <View style={[s.row, { justifyContent: "space-between" }]}>
                 <Text style={s.label}>{label}</Text>
-                <Icon color={colors.orange} size={17} />
+                <Icon
+                  color={["#64479b", "#287263", "#a44925", "#3c64a5"][index]}
+                  size={20}
+                />
               </View>
               <Text
                 style={{ fontSize: 29, fontWeight: "700", color: colors.ink }}
@@ -258,6 +284,8 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           />,
           <RobotCommandCenter fleet={fleet} expanded={tab === "Robots"} />,
         )}
+      {tab === "Robots" && <GazeboDrivingLab />}
+      {(tab === "Robots" || tab === "Settings") && <ArielAssistant />}
       {(tab === "Overview" || tab === "Analytics") &&
         pair(
           <MissionAnalytics missions={missions} now={fleet.now} />,
@@ -275,6 +303,26 @@ export function FleetScreen({ tab }: { tab: Tab }) {
       )}
       {tab === "Settings" && (
         <View style={s.stack}>
+          <AnalyticsPreferences />
+          <Panel
+            title="Gazebo cooperation"
+            subtitle="Integration prepared, backend intentionally idle."
+          >
+            <View style={s.body}>
+              <Badge label="NOT CONNECTED" tone="orange" />
+              <Text style={s.text}>
+                Gazebo Harmonic / shapes / hatchback_blue. The driving lab
+                previews Ackermann velocity commands locally.
+              </Text>
+              <Text style={s.caption}>
+                The Gazebo source provides Python transport controls, not a web
+                API. Proposed gateway schemas and control leases are documented
+                in docs/GAZEBO_INTEGRATION.md. The Atlas warehouse demo remains
+                separate; its map units must not be interpreted as Gazebo
+                meters.
+              </Text>
+            </View>
+          </Panel>
           <Panel
             title="Connection & integration"
             subtitle="Build-time configuration, never a hidden demo fallback."

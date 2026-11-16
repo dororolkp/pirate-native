@@ -2,6 +2,14 @@
 
 Delivery date: **14 November 2026**.
 
+## Gazebo Enhancement Verification
+
+The Gazebo enhancement adds a colorful driving-world diagram, idle Ackermann command previews, local Ariel guidance, modular-monolith contracts, static route SEO metadata and consent-gated GA4 web integration. Release commits and automated verification are tracked in the GitHub repository; the production website is published through its connected Vercel project. Consult GitHub Actions and Vercel deployment history for the current release status.
+
+Verified locally: lint, TypeScript, 36 unit tests, 22 desktop/phone-browser tests, web/iOS/Android bundle exports and Expo Doctor 20/20. Expo Doctor used an isolated OS-temporary cache because the sandbox denied its normal cache directory. No native binary/device testing or live Gazebo integration was performed.
+
+GA4 needs a real owner-supplied measurement ID, Enhanced Measurement disabled in Google, and user opt-in. Search Console submission and external analytics collection were not performed. The image-generation service returned a placeholder, so the delivered scene is a vector diagram with no external image dependency. Read [Gazebo Integration](GAZEBO_INTEGRATION.md) for API readiness and activation steps.
+
 ## Delivered
 
 - New cross-platform Expo/React Native TypeScript implementation in `C:\Users\leekw\Documents\startupReactNative`.

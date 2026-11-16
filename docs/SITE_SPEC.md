@@ -12,7 +12,7 @@ Reference: `startup project/pirate` at `d5b4f30`, with original domain, simulato
 
 | Target  | Runtime/build                                     | Layout                                         |
 | ------- | ------------------------------------------------- | ---------------------------------------------- |
-| Web     | Expo Router SPA, React Native Web, static `dist/` | Desktop sidebar or responsive mobile tabs      |
+| Web     | Expo Router static route HTML + client hydration | Desktop sidebar or responsive mobile tabs      |
 | iOS     | React Native, Expo modules, Hermes                | Safe-area-aware native views, touch navigation |
 | Android | React Native, Expo modules, Hermes                | Safe-area-aware native views, touch navigation |
 
@@ -28,7 +28,13 @@ One configured robot is supported. No authentication, real fleet reservation, mu
 | `/analytics` | Analytics | Reporting period, timestamp-derived chart and mission performance                                              |
 | `/settings`  | Settings  | Mode/API configuration display, retry telemetry, scenarios, connection simulation, reset and integration notes |
 
-Direct web URLs and reloads use the hosting SPA fallback. Native deep links use the `pirate-native` scheme, for example `pirate-native://robots`. Normal navigation stays inside one FleetProvider so changing routes does not reset active work.
+Direct web URLs and reloads use per-route static HTML and clean URLs. Native deep links use the `pirate-native` scheme, for example `pirate-native://robots`. Normal navigation stays inside one FleetProvider so changing routes does not reset active work.
+
+## Gazebo Enhancement
+
+Overview and Robots feature a colorful vector car/lane/obstacle concept diagram and violet/teal/coral/blue metric surfaces. Robots adds a disconnected Ackermann command-preview lab for `shapes` / `hatchback_blue`, using source wheelbase 2.5165 m, steering +/-0.45 rad, and speed 0.2-2 m/s. Preview controls never send network commands or move a real/simulated Gazebo entity. Atlas missions remain separate.
+
+Ariel is a curated local guidance component available in Robots, Settings and Help. Optional GA4 web tracking requires an owner-supplied measurement ID and explicit consent. Static route metadata, robots rules, sitemap, image descriptions, visible keyboard focus and reduced-motion CSS support web presentation/accessibility. See [Gazebo Integration](GAZEBO_INTEGRATION.md) for architecture, proposed API schemas, privacy configuration and readiness criteria. No active Gazebo backend or external AI assistant is delivered.
 
 ## Shared Workspace
 

@@ -11,6 +11,16 @@ A new Expo + React Native application that recreates the Pirate Next.js dashboar
 
 > Safe simulation is the default. No physical robot is controlled. Demo cancel/stop buttons are not certified emergency stops. A configured API never falls back to simulated success.
 
+## Gazebo Driving Lab
+
+The Robots screen now includes colorful Gazebo Harmonic driving previews based on [painpongpoint/Gazebo-Simulator](https://github.com/painpongpoint/Gazebo-Simulator). Choose speed and hold a direction to inspect Ackermann velocity commands. **Gazebo backend remains idle: no commands, sockets or API calls are sent.** Atlas warehouse missions remain an independent local demo.
+
+Ariel provides curated local guidance, not a remote AI service. The modular monolith keeps simulator domain rules, UI, fleet transport and web infrastructure separate inside one app and release unit.
+
+Web now exports static route HTML with titles, canonical/Open Graph/Twitter metadata, sitemap, English language and keyboard-focus support. Optional Google Analytics 4 is web-only, unconfigured without a real `EXPO_PUBLIC_GA_MEASUREMENT_ID`, and off until explicit opt-in in Settings. Disable GA Enhanced Measurement before enabling the integration.
+
+Read [Gazebo Integration and Architecture](docs/GAZEBO_INTEGRATION.md) for verified source settings, proposed backend contracts, safety boundaries, accessibility and privacy configuration.
+
 ## Delivery Status
 
 Web production export and web/iOS/Android JavaScript bundles can be built in this repository. **Exported native bundles are not APK, AAB, IPA, or installable apps.** Signed native builds and store releases need an authenticated Expo account and platform signing/store credentials. See [Delivery Status](docs/DELIVERY_STATUS.md) for verified results and outstanding work.
@@ -72,7 +82,7 @@ Computer and phone normally need the same reachable network. Scan with Expo Go o
 # Export a deployable website to dist/.
 npm run build:web
 
-# Serve the exported website, including deep-link fallback.
+# Serve static HTML routes using clean URLs.
 npm run preview:web
 ```
 
@@ -160,6 +170,7 @@ Scoped npm overrides replace vulnerable `minimatch` transitive versions for Expo
 | [Site Specification](docs/SITE_SPEC.md)          | Screens, visual tokens, state model, parity, acceptance criteria |
 | [Build and Deployment](docs/BUILD_AND_DEPLOY.md) | Detailed commands, SDK setup, Vercel, EAS, stores, team access   |
 | [API Contract](docs/API_CONTRACT.md)             | Payload schemas, errors, networking, safety boundaries           |
+| [Gazebo Integration](docs/GAZEBO_INTEGRATION.md) | Idle driving lab, proposed gateway, modular monolith, SEO/GA4    |
 | [Delivery Status](docs/DELIVERY_STATUS.md)       | Actual delivery evidence and remaining credential-dependent work |
 
 `src/app/` contains Expo Router routes. `src/components/` implements responsive native UI. `src/hooks/use-fleet.tsx` owns one shared fleet session across routes. `src/lib/` contains domain rules, simulator, asynchronous persistence, HTTP adapter and platform-specific CSV export. Tests cover domain, transport, persistence and rendered web interaction.

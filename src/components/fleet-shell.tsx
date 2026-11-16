@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Link, Slot, usePathname } from "expo-router";
 import {
-  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from "react-native";
 import {
   Anchor,
@@ -27,6 +25,9 @@ import { StatusBar } from "expo-status-bar";
 import { useFleet } from "../hooks/use-fleet";
 import { ActivityTimeline } from "./mission-history";
 import { Badge, Button, colors, s } from "./ui";
+import { WebPresence } from "./web-presence";
+import { ArielAssistant } from "./ariel-assistant";
+import { useLayoutWidth } from "../hooks/use-layout-width";
 
 const navigation = [
   { label: "Overview", href: "/" as const, icon: LayoutDashboard },
@@ -87,7 +88,7 @@ export function Dialog({
 export function FleetShell() {
   const fleet = useFleet();
   const path = usePathname();
-  const { width } = useWindowDimensions();
+  const width = useLayoutWidth();
   const desktop = width >= 1050;
   const [activity, setActivity] = useState(false);
   const [help, setHelp] = useState(false);
@@ -131,6 +132,7 @@ export function FleetShell() {
     });
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <WebPresence />
       <StatusBar style="dark" />
       <View style={{ flex: 1, flexDirection: "row" }}>
         {desktop && (
@@ -151,7 +153,7 @@ export function FleetShell() {
                 <Warehouse size={22} color={colors.muted} />
                 <View>
                   <Text style={[s.text, { fontWeight: "600" }]}>
-                    Acme Warehouse
+                    Simulation studio
                   </Text>
                   <Text style={s.caption}>
                     {fleet.isLive ? "API workspace" : "Demo workspace"}
@@ -179,9 +181,9 @@ export function FleetShell() {
             </Link>
             <View style={{ flex: 1 }} />
             <View style={styles.demoCard}>
-              <Text style={s.panelTitle}>Built for the real world.</Text>
+              <Text style={s.panelTitle}>A brighter driving lab.</Text>
               <Text style={s.caption}>
-                Start in simulation. Connect to your robot when you&apos;re
+                Explore Gazebo previews. Backend stays idle until the gateway is
                 ready.
               </Text>
               <Button label="Explore the demo" onPress={() => setHelp(true)} />
@@ -278,33 +280,19 @@ export function FleetShell() {
               <Button label="Dismiss message" onPress={fleet.dismiss} />
             </View>
           )}
-          {fleet.snapshot ? (
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{
-                padding: desktop ? 30 : 16,
-                paddingBottom: 35,
-              }}
-            >
-              <View
-                style={{ width: "100%", maxWidth: 1600, alignSelf: "center" }}
-              >
-                <Slot />
-              </View>
-            </ScrollView>
-          ) : (
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{
+              padding: desktop ? 30 : 16,
+              paddingBottom: 35,
+            }}
+          >
             <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 12,
-              }}
+              style={{ width: "100%", maxWidth: 1600, alignSelf: "center" }}
             >
-              <ActivityIndicator color={colors.orange} />
-              <Text style={s.text}>Connecting to your fleet...</Text>
+              <Slot />
             </View>
-          )}
+          </ScrollView>
         </View>
       </View>
       {!desktop && <View style={styles.mobileNav}>{nav(true)}</View>}
@@ -320,6 +308,7 @@ export function FleetShell() {
         visible={help}
         close={() => setHelp(false)}
       >
+        <ArielAssistant />
         <Text style={s.panelTitle}>
           Fleet & mission control for things that move.
         </Text>

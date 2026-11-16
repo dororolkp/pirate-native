@@ -3,13 +3,13 @@ import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { LucideIcon } from "lucide-react-native";
 
 export const colors = {
-  background: "#f8f9fb",
+  background: "#f5f4fc",
   surface: "#ffffff",
   ink: "#253246",
-  muted: "#697688",
-  border: "#e8ebef",
-  orange: "#e87b42",
-  orangeSoft: "#fff1e7",
+  muted: "#59657a",
+  border: "#e1e3ef",
+  orange: "#a44925",
+  orangeSoft: "#fff0e8",
   green: "#397558",
   greenSoft: "#e9f3ec",
   red: "#b44c48",
@@ -96,7 +96,7 @@ export function Panel({
     <View style={[s.panel, style]}>
       <View style={s.panelHead}>
         <View style={{ flex: 1 }}>
-          <Text accessibilityRole="header" style={s.panelTitle}>
+          <Text accessibilityRole="header" aria-level={2} style={s.panelTitle}>
             {title}
           </Text>
           {subtitle && <Text style={s.caption}>{subtitle}</Text>}
@@ -163,7 +163,7 @@ export const s = StyleSheet.create({
     paddingVertical: 11,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
+    borderRadius: 12,
     backgroundColor: "white",
     flexDirection: "row",
     alignItems: "center",
@@ -175,7 +175,7 @@ export const s = StyleSheet.create({
   danger: { backgroundColor: "#fff5f4", borderColor: "#f0d4d2" },
   selected: { backgroundColor: colors.orangeSoft, borderColor: "#edc5ae" },
   panel: {
-    borderRadius: 12,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "white",

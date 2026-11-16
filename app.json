@@ -24,9 +24,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "output": "single",
+      "output": "static",
       "name": "Pirate | Fleet and Mission Control",
-      "description": "Cross-platform fleet and mission control. Safe simulation by default."
+      "description": "Colorful fleet and Gazebo driving laboratory. Local control previews, safe simulation, and backend-ready integration."
     },
     "plugins": ["expo-router", "expo-sharing"],
     "experiments": { "typedRoutes": true }

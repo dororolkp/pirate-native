@@ -67,9 +67,9 @@ npm run build:web
 npm run preview:web
 ```
 
-`dist/` contains HTML, hashed bundles, favicon and bundled assets. `serve -s` routes deep links to `index.html`. Stop the previous Metro server if port 8081 is occupied.
+`dist/` contains per-route static HTML, hashed bundles, favicon, robots rules and sitemap. `serve dist` serves clean URLs without SPA fallback. Stop the previous Metro server if port 8081 is occupied.
 
-Do not open `dist/index.html` using `file://`; modules and deep-link routing need an HTTP server. This is an SPA, not a Next.js server, SSR site, API server, offline-installed PWA, or SEO-oriented static multi-page export.
+Do not open `dist/index.html` using `file://`; modules and routing need an HTTP server. This is a statically rendered Expo Router website with client hydration, not a Next.js/API server or offline-installed PWA. Local mission data is not embedded in static HTML.
 
 ## 4. Vercel Production Deployment
 
@@ -93,7 +93,9 @@ npm run check
 npx vercel@latest deploy --prod --yes
 ```
 
-`link` creates `.vercel/project.json` locally; it can also download ignored local environment settings. Never commit that folder or an OIDC token. `vercel.json` defines the build/output, SPA fallback, and baseline security headers. `.vercelignore` excludes native exports, caches and local credentials from upload.
+`link` creates `.vercel/project.json` locally; it can also download ignored local environment settings. Never commit that folder or an OIDC token. `vercel.json` defines the build/output, clean static URLs and baseline security headers. `.vercelignore` excludes native exports, caches and local credentials from upload.
+
+Gazebo remains disconnected; no new backend URL is consumed. For optional GA4, configure a real `EXPO_PUBLIC_GA_MEASUREMENT_ID`, disable Enhanced Measurement in the Google stream, rebuild and test opt-in/opt-out under Settings. Submit `/sitemap.xml` to Search Console after publishing. See [Gazebo Integration](GAZEBO_INTEGRATION.md) for the complete architecture and privacy checklist.
 
 To redeploy on another Vercel account, use `vercel link` interactively to choose that account/project. The public subdomain is subject to availability; Vercel assigns a unique URL if the name is taken. Hobby-plan commercial-use restrictions, quotas and custom-domain costs depend on Vercel terms.
 

@@ -51,7 +51,7 @@
     "check": "npm run lint && npm run typecheck && npm test && npm run build:web",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"docs/**/*.md\" \"*.{json,ts,tsx,md,js}\"",
     "deploy:web": "npx vercel@latest --prod",
-    "preview:web": "serve dist -s -l 8081",
+    "preview:web": "serve dist -l 8081",
     "generate:icons": "node scripts/generate-icons.js"
   },
   "engines": {

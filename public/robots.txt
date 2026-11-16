@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /settings
+
+Sitemap: https://pirate-native.vercel.app/sitemap.xml
