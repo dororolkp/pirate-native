@@ -178,6 +178,8 @@ Scoped npm overrides replace vulnerable `minimatch` transitive versions for Expo
 
 ## Documentation and Architecture
 
+The Uiverse-inspired visual system uses original vector artwork, deferred web illustration/animation chunks and reduced-motion support. See [Visual Design and CDN Delivery](docs/VISUAL_DESIGN.md) and [third-party credits](THIRD_PARTY_NOTICES.md). No remote image hotlinks or additional animation library is needed.
+
 | Document                                         | Contents                                                         |
 | ------------------------------------------------ | ---------------------------------------------------------------- |
 | [Site Specification](docs/SITE_SPEC.md)          | Screens, visual tokens, state model, parity, acceptance criteria |

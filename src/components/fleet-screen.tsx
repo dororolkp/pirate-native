@@ -20,6 +20,7 @@ import {
   STATIONS,
 } from "../lib/fleet-domain";
 import { API_BASE, ROBOT_ID } from "../lib/fleet-service";
+import { visualAttributes } from "../lib/visual-attributes";
 import { Badge, Button, colors, Panel, s } from "./ui";
 import { WarehouseMap } from "./warehouse-map";
 import { RobotCommandCenter } from "./robot-command-center";
@@ -256,6 +257,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           ].map(({ label, value, note, icon: Icon }, index) => (
             <View
               key={label}
+              {...visualAttributes("metric")}
               style={{
                 flexGrow: 1,
                 flexBasis: width < 600 ? "45%" : "21%",
@@ -267,8 +269,25 @@ export function FleetScreen({ tab }: { tab: Tab }) {
                 borderColor: colors.border,
                 borderRadius: 18,
                 gap: 12,
+                overflow: "hidden",
               }}
             >
+              <View
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  width: 110,
+                  height: 110,
+                  borderRadius: index % 2 === 0 ? 55 : 24,
+                  borderWidth: 20,
+                  borderColor: ["#d5cdf3", "#bce7dc", "#f6d7c4", "#cbdcf5"][
+                    index
+                  ],
+                  right: -35,
+                  bottom: -38,
+                  transform: [{ rotate: "25deg" }],
+                }}
+              />
               <View style={[s.row, { justifyContent: "space-between" }]}>
                 <Text style={s.label}>{label}</Text>
                 <Icon

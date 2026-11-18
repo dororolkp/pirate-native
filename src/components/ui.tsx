@@ -1,6 +1,7 @@
 import { PropsWithChildren } from "react";
 import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { LucideIcon } from "lucide-react-native";
+import { visualAttributes } from "../lib/visual-attributes";
 
 export const colors = {
   background: "#f5f4fc",
@@ -43,6 +44,7 @@ export function Button({
       }}
       disabled={disabled}
       onPress={onPress}
+      {...visualAttributes("button", danger ? "danger" : "regular")}
       style={({ pressed }) => [
         s.button,
         primary && s.primary,
@@ -93,7 +95,7 @@ export function Panel({
   style?: ViewStyle;
 }>) {
   return (
-    <View style={[s.panel, style]}>
+    <View {...visualAttributes("panel")} style={[s.panel, style]}>
       <View style={s.panelHead}>
         <View style={{ flex: 1 }}>
           <Text accessibilityRole="header" aria-level={2} style={s.panelTitle}>
@@ -163,7 +165,7 @@ export const s = StyleSheet.create({
     paddingVertical: 11,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: "white",
     flexDirection: "row",
     alignItems: "center",
@@ -171,7 +173,11 @@ export const s = StyleSheet.create({
     gap: 8,
   },
   buttonText: { fontSize: 12, fontWeight: "600", color: colors.ink },
-  primary: { backgroundColor: colors.orange, borderColor: colors.orange },
+  primary: {
+    backgroundColor: colors.orange,
+    borderColor: colors.orange,
+    boxShadow: "0 4px 0 #75371f",
+  },
   danger: { backgroundColor: "#fff5f4", borderColor: "#f0d4d2" },
   selected: { backgroundColor: colors.orangeSoft, borderColor: "#edc5ae" },
   panel: {

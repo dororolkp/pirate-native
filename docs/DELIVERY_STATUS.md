@@ -1,8 +1,16 @@
 # Delivery Status
 
-Delivery date: **14 November 2026**.
+Initial delivery date: **14 November 2026**.
 
-## Current Readiness Upgrade
+## Visual Upgrade
+
+The 18 November 2026 visual upgrade adds MIT-attributed Uiverse-inspired card/button treatments, a violet hero, colorful geometric reporting cards and original vector driving-world artwork. The web art and finite animation styles load as a separate approximately 4.8 KB chunk near the viewport, with stable fallback geometry, reduced-motion support and isolated chunk failures.
+
+Local validation against the final lockfile includes a successful clean Windows install, **136 unit/component/hook/SQL/privacy tests and 36 desktop/mobile browser tests**, lint, TypeScript, web/iOS/Android bundle exports and Expo Doctor 20/20. Linux x64 and Windows x64 installation dry runs also passed. Browser coverage includes deferred requests, failed-chunk mission usability, fixed frame dimensions and paused/reduced motion. Backend control remains idle; native signing and physical-device QA are still unperformed.
+
+Expo SDK-compatible patch updates and a regenerated portable lockfile are included. npm currently reports 43 affected dependency entries cascading from an advisory withdrawn by GitHub on the same date. No audit suppression was introduced, so the existing CI audit gate may fail until npm updates its data. See [Visual Design and Delivery](VISUAL_DESIGN.md) for design credits, CDN limits, module boundaries and the audit evidence.
+
+## Earlier Readiness Upgrade
 
 Implemented locally: six-destination UI with operations health and private Logbook; bounded read backoff/background pause; throttled routine persistence; fixed optional analytics events; static structured data/private-route SEO; and a backend-ready SQLite migration with enforced constraints/indexes.
 

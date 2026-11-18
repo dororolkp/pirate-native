@@ -28,8 +28,23 @@ export default function RootHtml({ children }: PropsWithChildren) {
           :focus-visible { outline: 3px solid #443c91 !important; outline-offset: 3px; }
           .skip-link { position: fixed; top: -100px; left: 16px; z-index: 9999; padding: 14px 20px; border-radius: 10px; color: white; background: #443c91; font: 600 14px system-ui; }
           .skip-link:focus { top: 16px; }
+          /* Uiverse-inspired sheen and offset-card interaction. See THIRD_PARTY_NOTICES.md. */
+          [data-ui="button"] { position: relative; overflow: hidden; transition: border-color 160ms ease, box-shadow 160ms ease; }
+          [data-ui="button"][data-variant="regular"]::after {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(120deg, transparent 25%, #ffffff45 50%, transparent 75%);
+            transform: translateX(-120%); transition: transform 450ms ease;
+          }
+          [data-ui="button"][data-variant="regular"]:not([aria-disabled="true"]):focus-visible::after { transform: translateX(120%); }
+          [data-ui="panel"] { box-shadow: 0 5px 18px #33276b08; }
+          [data-ui="metric"] { position: relative; overflow: hidden; box-shadow: 0 4px 0 #33276b10; }
+          @media (hover: hover) {
+            [data-ui="button"][data-variant="regular"]:not([aria-disabled="true"]):hover { border-color: #7664c5; }
+            [data-ui="button"][data-variant="regular"]:not([aria-disabled="true"]):hover::after { transform: translateX(120%); }
+          }
           @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+            [data-ui="button"]::after { display: none; }
           }
         `}</style>
       </head>
