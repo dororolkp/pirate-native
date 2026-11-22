@@ -1,5 +1,48 @@
 import { expect, test } from "@playwright/test";
 
+test("maximalist layout keeps controls and dialogs usable at 320px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto("/");
+  await expect(page.getByTestId("maximalist-hero")).toBeVisible();
+  await expect(page.getByText("SMALL ROBOT. BIG IDEAS.")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.getByRole("button", { name: "Help", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Close dialog", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Send to Station B", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Cancel mission", exact: true }),
+  ).toBeEnabled();
+  await page
+    .getByRole("button", { name: "Cancel mission", exact: true })
+    .click();
+  for (const path of [
+    "/robots",
+    "/missions",
+    "/analytics",
+    "/logbook",
+    "/settings",
+  ]) {
+    await page.goto(path);
+    await expect(page.locator("#main-content")).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+  }
+});
+
 test("illustration chunk is deferred until visibility and does not shift its frame", async ({
   page,
 }) => {

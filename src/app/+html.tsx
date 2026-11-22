@@ -36,8 +36,12 @@ export default function RootHtml({ children }: PropsWithChildren) {
             transform: translateX(-120%); transition: transform 450ms ease;
           }
           [data-ui="button"][data-variant="regular"]:not([aria-disabled="true"]):focus-visible::after { transform: translateX(120%); }
-          [data-ui="panel"] { box-shadow: 0 5px 18px #33276b08; }
-          [data-ui="metric"] { position: relative; overflow: hidden; box-shadow: 0 4px 0 #33276b10; }
+          #main-content { background-image: radial-gradient(#8053a51c 1px, transparent 1px); background-size: 18px 18px; }
+          [data-testid="maximalist-hero"] {
+            background-image: radial-gradient(circle at 85% 20%, #ad54e766, transparent 45%), linear-gradient(135deg, #5020a0, #39116f);
+          }
+          [data-ui="panel"] { box-shadow: 5px 6px 0 #e4c9ee; }
+          [data-ui="metric"] { position: relative; overflow: hidden; box-shadow: 4px 5px 0 #34204b; }
           @media (hover: hover) {
             [data-ui="button"][data-variant="regular"]:not([aria-disabled="true"]):hover { border-color: #7664c5; }
             [data-ui="button"][data-variant="regular"]:not([aria-disabled="true"]):hover::after { transform: translateX(120%); }

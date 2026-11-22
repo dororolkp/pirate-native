@@ -21,7 +21,8 @@ import {
 } from "../lib/fleet-domain";
 import { API_BASE, ROBOT_ID } from "../lib/fleet-service";
 import { visualAttributes } from "../lib/visual-attributes";
-import { Badge, Button, colors, Panel, s } from "./ui";
+import { Badge, Button, colors, maximalist, Panel, s } from "./ui";
+import { MaximalistPattern } from "./maximalist-pattern";
 import { WarehouseMap } from "./warehouse-map";
 import { RobotCommandCenter } from "./robot-command-center";
 import { MissionAnalytics, MissionPerformance } from "./mission-analytics";
@@ -141,7 +142,18 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           <Text
             style={[
               s.label,
-              { fontSize: 9, letterSpacing: 1.5, marginBottom: 9 },
+              {
+                fontSize: 9,
+                letterSpacing: 1.5,
+                marginBottom: 12,
+                alignSelf: "flex-start",
+                color: maximalist.outline,
+                backgroundColor: maximalist.pink,
+                padding: 7,
+                borderWidth: 1,
+                borderColor: maximalist.outline,
+                borderRadius: 6,
+              },
             ]}
           >
             YOUR OPERATIONS, IN SYNC
@@ -150,8 +162,8 @@ export function FleetScreen({ tab }: { tab: Tab }) {
             accessibilityRole="header"
             aria-level={1}
             style={{
-              fontSize: width < 600 ? 29 : 34,
-              fontWeight: "700",
+              fontSize: width < 600 ? 32 : 42,
+              fontWeight: "900",
               letterSpacing: -1.1,
               color: colors.ink,
             }}
@@ -187,9 +199,9 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           {
             padding: 14,
             backgroundColor: fleet.isLive ? "#edf3fa" : "#fff7f0",
-            borderRadius: 9,
-            borderWidth: 1,
-            borderColor: fleet.isLive ? "#d3e0ef" : "#f0e1d4",
+            borderRadius: 14,
+            borderWidth: 2,
+            borderColor: maximalist.outline,
           },
         ]}
       >
@@ -223,7 +235,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
         </View>
       )}
       {tab !== "Settings" && tab !== "Logbook" && (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 14 }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 18 }}>
           {[
             {
               label: "Total missions",
@@ -261,13 +273,18 @@ export function FleetScreen({ tab }: { tab: Tab }) {
               style={{
                 flexGrow: 1,
                 flexBasis: width < 600 ? "45%" : "21%",
-                backgroundColor: ["#eeebff", "#e5f4ef", "#fff0e6", "#e8f0ff"][
-                  index
-                ],
-                padding: 20,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 18,
+                backgroundColor: [
+                  maximalist.pink,
+                  maximalist.teal,
+                  maximalist.yellow,
+                  maximalist.lime,
+                ][index],
+                padding: 18,
+                borderWidth: 2,
+                borderColor: maximalist.outline,
+                borderRadius: 22,
+                borderTopRightRadius: index % 2 === 0 ? 8 : 22,
+                boxShadow: "4px 5px 0 #34204b",
                 gap: 12,
                 overflow: "hidden",
               }}
@@ -276,27 +293,37 @@ export function FleetScreen({ tab }: { tab: Tab }) {
                 pointerEvents="none"
                 style={{
                   position: "absolute",
-                  width: 110,
-                  height: 110,
-                  borderRadius: index % 2 === 0 ? 55 : 24,
-                  borderWidth: 20,
-                  borderColor: ["#d5cdf3", "#bce7dc", "#f6d7c4", "#cbdcf5"][
-                    index
-                  ],
                   right: -35,
                   bottom: -38,
-                  transform: [{ rotate: "25deg" }],
+                  opacity: 0.35,
                 }}
-              />
+              >
+                <MaximalistPattern color="#ffffff" size={130} />
+              </View>
               <View style={[s.row, { justifyContent: "space-between" }]}>
-                <Text style={s.label}>{label}</Text>
-                <Icon
-                  color={["#64479b", "#287263", "#a44925", "#3c64a5"][index]}
-                  size={20}
-                />
+                <Text
+                  style={[
+                    s.label,
+                    { color: colors.ink, fontWeight: "800", flex: 1 },
+                  ]}
+                >
+                  {label}
+                </Text>
+                <View
+                  style={{
+                    padding: 7,
+                    backgroundColor: "#fffdfa",
+                    borderWidth: 1,
+                    borderColor: maximalist.outline,
+                    borderRadius: 10,
+                    transform: [{ rotate: index % 2 === 0 ? "-7deg" : "7deg" }],
+                  }}
+                >
+                  <Icon color={maximalist.violet} size={18} />
+                </View>
               </View>
               <Text
-                style={{ fontSize: 29, fontWeight: "700", color: colors.ink }}
+                style={{ fontSize: 34, fontWeight: "900", color: colors.ink }}
               >
                 {value}
               </Text>

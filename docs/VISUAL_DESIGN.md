@@ -2,7 +2,9 @@
 
 ## Direction
 
-Violet hero, teal/coral driving-world vector art, inset geometric shapes, pastel reporting cards and offset primary-button shadows. Uiverse's free MIT patterns inspired the card framing and diagonal interaction sheen; see [credits and license](../THIRD_PARTY_NOTICES.md). Safety/status copy stays explicit. Decorative motion never indicates robot movement, command acceptance or backend connectivity.
+A maximalist robotics studio: electric violet, pink, lime, teal and yellow; oversized typography; thick ink outlines; offset shadows; asymmetric card corners; and original starburst geometry. The cream dotted canvas and expressive hero frame the mission controls without changing their behavior. Uiverse's free MIT patterns inspired the card framing and diagonal interaction sheen; see [credits and license](../THIRD_PARTY_NOTICES.md). Safety/status copy stays explicit. Decorative motion never indicates robot movement, command acceptance or backend connectivity.
+
+Pure palette tokens live in `src/lib/theme.ts`, with compatibility re-exports from the shared UI module. `MaximalistPattern` is memoized static SVG geometry, hidden from assistive technology and pointer input. Shared buttons, panels, navigation, metric cards and dialogs use the same outlined visual language. Gradients and dotted backgrounds are web-only enhancements; native layouts retain solid colors and shared geometry.
 
 ## Module Boundaries
 
@@ -30,6 +32,8 @@ Vercel's free/Hobby offering is subject to current usage and eligibility limits;
 
 `tests/unit/hero-art.test.ts` checks lazy visibility gating, observer fallback/cleanup, server rendering and failed-art isolation. Native layout gating has a separate component test. Browser tests verify deferred chunk delivery, the failed-chunk fallback, reduced motion, hidden-tab state, responsive overflow and the SVG accessible label. Existing fleet/mission/privacy tests remain the regression baseline.
 
+The maximalist release passed lint, typechecking, 144 unit tests, 38 browser tests and all 20 Expo Doctor checks. Palette tests verify WCAG AA 4.5:1 contrast for body/muted text on the shared cream and colorful surfaces, plus hero and selected-button text. Browser regression coverage includes every route at 320px, help dialog dismissal, dispatch/cancel and horizontal overflow. Production web and Android/iOS Hermes bundle exports succeeded.
+
 ```bash
 npm run check
 npm run test:e2e
@@ -38,8 +42,10 @@ npm run build:bundles
 
 Native bundle exports are not physical-device rendering tests or signed APK/AAB/IPA releases. Runtime native QA remains required before store delivery.
 
-## Audit Discrepancy
+## Dependency Audit
 
-On 18 November 2026, npm audit reported 43 high-severity affected dependency entries, all cascading from picomatch advisory [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf). GitHub's advisory API confirms `withdrawn_at: 2026-11-18T15:38:56Z`, but npm still includes it in its audit response. This release does not claim a zero-warning audit. No blanket exclusions, forced Expo downgrades or audit-gate removal were applied. CI's existing `npm audit` step may remain red until the registry reconciles its advisory data; inspect new findings independently rather than assuming they share this cause.
+The 22 November 2026 maximalist release audit reports **zero vulnerabilities** without dependency changes or audit exclusions. The registry has reconciled the earlier withdrawn finding described below.
+
+On 18 November 2026, npm audit reported 43 high-severity affected dependency entries, all cascading from picomatch advisory [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf). GitHub's advisory API confirmed `withdrawn_at: 2026-11-18T15:38:56Z`, while npm still included it in its response. That earlier release did not claim a zero-warning audit, and its CI audit step failed. No blanket exclusions, forced Expo downgrades or audit-gate removal were applied. Inspect future findings independently rather than assuming they share this historical cause.
 
 Expo, Expo Router and Expo FileSystem were updated to the SDK-compatible patch versions recommended by Expo Doctor. The lockfile was regenerated in a clean temporary directory and checked for Linux x64 and Windows x64 install portability.

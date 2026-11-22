@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowUpRight, BookOpen, ShieldCheck } from "lucide-react-native";
 import type { FleetController } from "../hooks/use-fleet";
 import { workspaceHealth } from "../lib/workspace-health";
-import { Badge, colors, s } from "./ui";
+import { Badge, colors, maximalist, s } from "./ui";
 
 export function WorkspaceHealth({ fleet }: { fleet: FleetController }) {
   if (!fleet.snapshot) return null;
@@ -20,15 +20,20 @@ export function WorkspaceHealth({ fleet }: { fleet: FleetController }) {
         {
           padding: 20,
           borderRadius: 18,
-          backgroundColor: "white",
-          borderWidth: 1,
-          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          borderWidth: 2,
+          borderColor: maximalist.outline,
+          boxShadow: "3px 4px 0 #ffe69b",
           gap: 18,
         },
       ]}
     >
       <View
-        style={{ padding: 12, borderRadius: 14, backgroundColor: "#eeebff" }}
+        style={{
+          padding: 12,
+          borderRadius: 14,
+          backgroundColor: maximalist.pink,
+        }}
       >
         <ShieldCheck size={24} color="#443c91" />
       </View>

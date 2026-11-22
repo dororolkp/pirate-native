@@ -25,7 +25,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useFleet } from "../hooks/use-fleet";
 import { ActivityTimeline } from "./mission-history";
-import { Badge, Button, colors, s } from "./ui";
+import { Badge, Button, colors, maximalist, s } from "./ui";
 import { WebPresence } from "./web-presence";
 import { ArielAssistant } from "./ariel-assistant";
 import { useLayoutWidth } from "../hooks/use-layout-width";
@@ -112,16 +112,19 @@ export function FleetShell() {
             accessibilityState={{ selected }}
             style={StyleSheet.flatten([
               mobile ? styles.mobileItem : styles.navItem,
-              selected && { backgroundColor: colors.orangeSoft },
+              selected && {
+                backgroundColor: maximalist.lime,
+                borderColor: maximalist.outline,
+              },
             ])}
           >
             <Icon
               size={mobile ? 20 : 18}
-              color={selected ? colors.orange : colors.muted}
+              color={selected ? maximalist.violet : colors.muted}
             />
             <Text
               style={{
-                color: selected ? colors.orange : colors.muted,
+                color: selected ? maximalist.violet : colors.muted,
                 fontSize: mobile ? 10 : 13,
                 fontWeight: selected ? "700" : "500",
               }}
@@ -360,9 +363,9 @@ const styles = StyleSheet.create({
     width: 232,
     padding: 18,
     paddingTop: 30,
-    backgroundColor: "white",
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
+    backgroundColor: "#fff0dc",
+    borderRightWidth: 2,
+    borderRightColor: maximalist.outline,
   },
   brand: {
     flexDirection: "row",
@@ -377,22 +380,25 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   mark: {
-    backgroundColor: colors.orange,
+    backgroundColor: maximalist.violet,
     width: 35,
     height: 36,
     borderRadius: 10,
     borderBottomLeftRadius: 3,
     alignItems: "center",
     justifyContent: "center",
+    boxShadow: "3px 3px 0 #ff8bc5",
+    transform: [{ rotate: "-6deg" }],
   },
   workspace: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: maximalist.outline,
+    backgroundColor: maximalist.yellow,
   },
   navItem: {
     flexDirection: "row",
@@ -401,10 +407,15 @@ const styles = StyleSheet.create({
     padding: 13,
     borderRadius: 8,
     minHeight: 46,
+    borderWidth: 2,
+    borderColor: "transparent",
   },
   demoCard: {
-    backgroundColor: "#faf7f3",
-    borderRadius: 10,
+    backgroundColor: maximalist.pink,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: maximalist.outline,
+    boxShadow: "3px 4px 0 #34204b",
     padding: 15,
     gap: 12,
     marginBottom: 18,
@@ -419,9 +430,9 @@ const styles = StyleSheet.create({
   },
   topbar: {
     minHeight: 72,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    backgroundColor: "#fffdfa",
+    borderBottomWidth: 2,
+    borderBottomColor: maximalist.outline,
     paddingHorizontal: 20,
     paddingVertical: 12,
     flexDirection: "row",
@@ -433,9 +444,9 @@ const styles = StyleSheet.create({
   mobileNav: {
     flexDirection: "row",
     padding: 6,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: "white",
+    borderTopWidth: 2,
+    borderTopColor: maximalist.outline,
+    backgroundColor: "#fff0dc",
   },
   mobileItem: {
     flex: 1,
@@ -444,6 +455,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 5,
     borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "transparent",
   },
   backdrop: {
     flex: 1,
@@ -457,7 +470,10 @@ const styles = StyleSheet.create({
     maxWidth: 620,
     maxHeight: "85%",
     backgroundColor: "white",
-    borderRadius: 14,
+    borderRadius: 24,
+    borderWidth: 3,
+    borderColor: maximalist.outline,
+    boxShadow: "8px 8px 0 #5020a0",
     overflow: "hidden",
   },
 });

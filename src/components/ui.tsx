@@ -2,19 +2,9 @@ import { PropsWithChildren } from "react";
 import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { LucideIcon } from "lucide-react-native";
 import { visualAttributes } from "../lib/visual-attributes";
+import { colors, maximalist } from "../lib/theme";
 
-export const colors = {
-  background: "#f5f4fc",
-  surface: "#ffffff",
-  ink: "#253246",
-  muted: "#59657a",
-  border: "#e1e3ef",
-  orange: "#a44925",
-  orangeSoft: "#fff0e8",
-  green: "#397558",
-  greenSoft: "#e9f3ec",
-  red: "#b44c48",
-};
+export { colors, maximalist } from "../lib/theme";
 export function Button({
   label,
   onPress,
@@ -62,7 +52,7 @@ export function Button({
               : danger
                 ? colors.red
                 : selected
-                  ? colors.orange
+                  ? maximalist.violet
                   : colors.muted
           }
         />
@@ -73,7 +63,7 @@ export function Button({
             s.buttonText,
             primary && { color: "white" },
             danger && { color: colors.red },
-            selected && { color: colors.orange },
+            selected && { color: maximalist.violet },
           ]}
         >
           {label}
@@ -163,29 +153,34 @@ export const s = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 2,
+    borderColor: maximalist.outline,
     borderRadius: 14,
     backgroundColor: "white",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    boxShadow: "0 3px 0 #34204b",
   },
-  buttonText: { fontSize: 12, fontWeight: "600", color: colors.ink },
+  buttonText: { fontSize: 12, fontWeight: "700", color: colors.ink },
   primary: {
-    backgroundColor: colors.orange,
-    borderColor: colors.orange,
-    boxShadow: "0 4px 0 #75371f",
+    backgroundColor: maximalist.violet,
+    borderColor: maximalist.outline,
+    boxShadow: "0 4px 0 #34204b",
   },
   danger: { backgroundColor: "#fff5f4", borderColor: "#f0d4d2" },
-  selected: { backgroundColor: colors.orangeSoft, borderColor: "#edc5ae" },
+  selected: {
+    backgroundColor: maximalist.lime,
+    borderColor: maximalist.outline,
+  },
   panel: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "white",
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: maximalist.outline,
+    backgroundColor: colors.surface,
     overflow: "hidden",
+    boxShadow: "5px 6px 0 #e4c9ee",
   },
   panelHead: {
     flexDirection: "row",
@@ -193,16 +188,19 @@ export const s = StyleSheet.create({
     gap: 12,
     flexWrap: "wrap",
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomWidth: 2,
+    borderBottomColor: maximalist.outline,
+    backgroundColor: "#fff0d4",
   },
-  panelTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" },
+  panelTitle: { color: colors.ink, fontSize: 17, fontWeight: "800" },
   caption: { color: colors.muted, fontSize: 12, lineHeight: 19, marginTop: 5 },
   body: { padding: 20, gap: 14 },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 5,
-    borderRadius: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#c6b1d3",
     alignSelf: "flex-start",
   },
   input: {
