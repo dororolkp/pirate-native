@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
-import {
-  Bot,
-  CheckCircle2,
-  Flag,
-  Plus,
-  RefreshCw,
-  TrendingUp,
-} from "lucide-react-native";
+import { Bot, CheckCircle2, Flag, Plus, TrendingUp } from "lucide-react-native";
 import { useFleet } from "../hooks/use-fleet";
 import {
   activeMission,
@@ -19,7 +12,6 @@ import {
   StationId,
   STATIONS,
 } from "../lib/fleet-domain";
-import { API_BASE, ROBOT_ID } from "../lib/fleet-service";
 import { visualAttributes } from "../lib/visual-attributes";
 import { Badge, Button, colors, maximalist, Panel, s } from "./ui";
 import { MaximalistPattern } from "./maximalist-pattern";
@@ -39,6 +31,8 @@ import { AnalyticsPreferences } from "./web-presence";
 import { useLayoutWidth } from "../hooks/use-layout-width";
 import { Logbook } from "./logbook";
 import { WorkspaceHealth } from "./workspace-health";
+import { BackendConnection } from "./backend-connection";
+import { GuideTarget } from "./guided-tour";
 
 type Tab =
   "Overview" | "Robots" | "Missions" | "Analytics" | "Settings" | "Logbook";
@@ -89,10 +83,12 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           {headings[tab][0]}
         </Text>
         <Text style={s.text}>{headings[tab][1]}</Text>
-        {(tab === "Overview" || tab === "Robots") && <SimulationHero />}
         <Text style={s.caption}>
-          Loading local workspace. Gazebo backend remains idle.
+          {fleet.isLive
+            ? "Connecting to David's backend. No commands have been sent."
+            : "Loading your local practice workspace."}
         </Text>
+        {tab === "Settings" && <BackendConnection fleet={fleet} />}
       </View>
     );
   const task = activeMission(snapshot);
@@ -183,7 +179,9 @@ export function FleetScreen({ tab }: { tab: Tab }) {
             disabled={fleet.pending}
             onPress={() => {
               setDestination(
-                snapshot.robot.pose.x > 650 ? "station_a" : "station_b",
+                snapshot.missions[0]?.destination === "station_b"
+                  ? "station_a"
+                  : "station_b",
               );
               setDispatchOpen(true);
             }}
@@ -191,8 +189,25 @@ export function FleetScreen({ tab }: { tab: Tab }) {
         )}
       </View>
       <WorkspaceHealth fleet={fleet} />
-      {tab === "Overview" && <SimulationHero />}
-      {tab === "Logbook" && <Logbook />}
+      {(tab === "Overview" || tab === "Robots") &&
+        pair(
+          <GuideTarget id="warehouse-map">
+            <WarehouseMap
+              snapshot={snapshot}
+              now={fleet.now}
+              live={fleet.isLive}
+            />
+          </GuideTarget>,
+          <GuideTarget id="command-center">
+            <RobotCommandCenter fleet={fleet} expanded={tab === "Robots"} />
+          </GuideTarget>,
+        )}
+      {tab === "Overview" && <SimulationHero live={fleet.isLive} />}
+      {tab === "Logbook" && (
+        <GuideTarget id="logbook">
+          <Logbook />
+        </GuideTarget>
+      )}
       <View
         style={[
           s.row,
@@ -211,28 +226,30 @@ export function FleetScreen({ tab }: { tab: Tab }) {
         />
         <Text style={[s.caption, { flex: 1, minWidth: 180, marginTop: 0 }]}>
           {fleet.isLive
-            ? "Authoritative backend telemetry. History includes tasks created in this session only."
+            ? "David's backend supplies robot state and the 200 newest missions. Its selected adapter (mock or Gazebo) controls motion."
             : "This workspace is a simulation. No physical robot is controlled. Includes 24 seeded sample missions."}
         </Text>
       </View>
       {tab !== "Settings" && tab !== "Logbook" && (
-        <View style={[s.row, { justifyContent: "space-between" }]}>
-          <Text style={s.label}>REPORTING PERIOD</Text>
-          <View style={s.row}>
-            {[
-              ["all", "All time"],
-              ["today", "Today"],
-              ["week", "Last 7 days"],
-            ].map(([value, label]) => (
-              <Button
-                key={value}
-                label={label}
-                selected={period === value}
-                onPress={() => setPeriod(value)}
-              />
-            ))}
+        <GuideTarget id="reporting">
+          <View style={[s.row, { justifyContent: "space-between" }]}>
+            <Text style={s.label}>REPORTING PERIOD</Text>
+            <View style={s.row}>
+              {[
+                ["all", "All time"],
+                ["today", "Today"],
+                ["week", "Last 7 days"],
+              ].map(([value, label]) => (
+                <Button
+                  key={value}
+                  label={label}
+                  selected={period === value}
+                  onPress={() => setPeriod(value)}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        </GuideTarget>
       )}
       {tab !== "Settings" && tab !== "Logbook" && (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 18 }}>
@@ -332,16 +349,11 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           ))}
         </View>
       )}
-      {(tab === "Overview" || tab === "Robots") &&
-        pair(
-          <WarehouseMap
-            snapshot={snapshot}
-            now={fleet.now}
-            live={fleet.isLive}
-          />,
-          <RobotCommandCenter fleet={fleet} expanded={tab === "Robots"} />,
-        )}
-      {tab === "Robots" && <GazeboDrivingLab />}
+      {tab === "Robots" && (
+        <GuideTarget id="driving-preview">
+          <GazeboDrivingLab />
+        </GuideTarget>
+      )}
       {(tab === "Robots" || tab === "Settings") && <ArielAssistant />}
       {(tab === "Overview" || tab === "Analytics") &&
         pair(
@@ -349,134 +361,110 @@ export function FleetScreen({ tab }: { tab: Tab }) {
           <MissionPerformance missions={missions} />,
         )}
       {(tab === "Overview" || tab === "Missions") && (
-        <MissionHistory
-          missions={missions}
-          viewMission={setSelected}
-          compact={tab === "Overview"}
-        />
+        <GuideTarget id="mission-history">
+          <MissionHistory
+            missions={missions}
+            viewMission={setSelected}
+            compact={tab === "Overview"}
+          />
+        </GuideTarget>
       )}
       {(tab === "Overview" || tab === "Robots" || tab === "Missions") && (
         <ActivityTimeline events={snapshot.events} />
       )}
       {tab === "Settings" && (
         <View style={s.stack}>
-          <AnalyticsPreferences />
+          <BackendConnection fleet={fleet} />
+          <GuideTarget id="privacy">
+            <AnalyticsPreferences />
+          </GuideTarget>
           <Panel
             title="Gazebo cooperation"
-            subtitle="Integration prepared, backend intentionally idle."
+            subtitle="A/B missions use David's API; manual driving stays a preview."
           >
             <View style={s.body}>
-              <Badge label="NOT CONNECTED" tone="orange" />
+              <Badge
+                label={
+                  fleet.isLive ? "ADAPTER SELECTED BY BACKEND" : "LOCAL PREVIEW"
+                }
+                tone="orange"
+              />
               <Text style={s.text}>
                 Gazebo Harmonic / shapes / hatchback_blue. The driving lab
                 previews Ackermann velocity commands locally.
               </Text>
               <Text style={s.caption}>
-                The Gazebo source provides Python transport controls, not a web
-                API. Proposed gateway schemas and control leases are documented
-                in docs/GAZEBO_INTEGRATION.md. The Atlas warehouse demo remains
-                separate; its map units must not be interpreted as Gazebo
-                meters.
-              </Text>
-            </View>
-          </Panel>
-          <Panel
-            title="Connection & integration"
-            subtitle="Build-time configuration, never a hidden demo fallback."
-          >
-            <View style={s.body}>
-              <Text style={s.text}>
-                Mode: {fleet.isLive ? "Live API" : "Local simulation"}
-              </Text>
-              <Text selectable style={s.text}>
-                API base: {API_BASE || "Not configured (demo)"}
-              </Text>
-              <Text style={s.text}>
-                Robot: {fleet.isLive ? ROBOT_ID : "robot_01"}
-              </Text>
-              <Text style={s.caption}>
-                Set EXPO_PUBLIC_API_BASE_URL and EXPO_PUBLIC_ROBOT_ID before
-                building. Public variables are bundled into the app. Never
-                include keys or credentials.
-              </Text>
-              <Button
-                label="Refresh telemetry"
-                icon={RefreshCw}
-                disabled={fleet.pending}
-                onPress={() => void fleet.refresh()}
-              />
-              <Text style={s.caption}>
-                Healthy native and web connections poll every two seconds.
-                Failed reads back off up to 30 seconds (up to 60 seconds for
-                Retry-After). Live polling pauses while backgrounded. Stale
-                robot heartbeats block dispatch after ten seconds. Physical map
-                conversion, authentication and stopping belong to the backend
-                and robot adapter.
+                David&apos;s backend provides REST tasks and robot telemetry for
+                both mock and Gazebo adapters. The frontend never publishes ROS
+                or Gazebo commands directly. The separate driving pad remains a
+                local preview, not live teleoperation.
               </Text>
             </View>
           </Panel>
           {!fleet.isLive && (
-            <Panel
-              title="Simulation laboratory"
-              subtitle="Try the same scenarios as the original Next.js app."
-            >
-              <View style={s.body}>
-                <Text style={s.label}>MISSION SCENARIO</Text>
-                <View style={s.row}>
-                  {(
-                    [
-                      ["normal", "Normal delivery"],
-                      ["obstacle", "Obstacle pause and recovery"],
-                      ["timeout", "Navigation timeout"],
-                    ] as const
-                  ).map(([command, label]) => (
-                    <Button
-                      key={command}
-                      label={label}
-                      selected={snapshot.scenario === command}
-                      disabled={Boolean(task) || fleet.pending}
-                      onPress={() => void fleet.demo(command)}
-                    />
-                  ))}
+            <GuideTarget id="practice-controls">
+              <Panel
+                title="Simulation laboratory"
+                subtitle="Safe local-only practice. Never sends backend commands."
+              >
+                <View style={s.body}>
+                  <Text style={s.label}>MISSION SCENARIO</Text>
+                  <View style={s.row}>
+                    {(
+                      [
+                        ["normal", "Normal delivery"],
+                        ["obstacle", "Obstacle pause and recovery"],
+                        ["timeout", "Navigation timeout"],
+                      ] as const
+                    ).map(([command, label]) => (
+                      <Button
+                        key={command}
+                        label={label}
+                        selected={snapshot.scenario === command}
+                        disabled={Boolean(task) || fleet.pending}
+                        onPress={() => void fleet.demo(command)}
+                      />
+                    ))}
+                  </View>
+                  <Text style={s.caption}>
+                    Normal: completes in about 19 seconds. Obstacle: pauses for
+                    4 seconds, then completes. Timeout: fails after 15 seconds.
+                  </Text>
+                  <View style={s.separator} />
+                  <Button
+                    label={
+                      snapshot.robot.connected
+                        ? "Simulate disconnect"
+                        : "Reconnect robot"
+                    }
+                    disabled={fleet.pending}
+                    danger={snapshot.robot.connected}
+                    onPress={() =>
+                      void fleet.demo(
+                        snapshot.robot.connected ? "disconnect" : "reconnect",
+                      )
+                    }
+                  />
+                  <Text style={s.caption}>
+                    Disconnect fails active work. Reconnect never resumes a
+                    failed mission.
+                  </Text>
+                  <View style={s.separator} />
+                  <Button
+                    label="Reset demo data"
+                    danger
+                    disabled={fleet.pending}
+                    onPress={() => setResetOpen(true)}
+                  />
+                  <Text style={s.caption}>
+                    Reset removes local demo history and restores 24 examples.
+                    Demo persistence is capped at 200 missions and 60 events.
+                    Manual mode is cleared on reload and backgrounding; active
+                    demo work resumes by wall-clock time.
+                  </Text>
                 </View>
-                <Text style={s.caption}>
-                  Normal: completes in about 19 seconds. Obstacle: pauses for 4
-                  seconds, then completes. Timeout: fails after 15 seconds.
-                </Text>
-                <View style={s.separator} />
-                <Button
-                  label={
-                    snapshot.robot.connected
-                      ? "Simulate disconnect"
-                      : "Reconnect robot"
-                  }
-                  disabled={fleet.pending}
-                  danger={snapshot.robot.connected}
-                  onPress={() =>
-                    void fleet.demo(
-                      snapshot.robot.connected ? "disconnect" : "reconnect",
-                    )
-                  }
-                />
-                <Text style={s.caption}>
-                  Disconnect fails active work. Reconnect never resumes a failed
-                  mission.
-                </Text>
-                <View style={s.separator} />
-                <Button
-                  label="Reset demo data"
-                  danger
-                  disabled={fleet.pending}
-                  onPress={() => setResetOpen(true)}
-                />
-                <Text style={s.caption}>
-                  Reset removes local demo history and restores 24 examples.
-                  Demo persistence is capped at 200 missions and 60 events.
-                  Manual mode is cleared on reload and backgrounding; active
-                  demo work resumes by wall-clock time.
-                </Text>
-              </View>
-            </Panel>
+              </Panel>
+            </GuideTarget>
           )}
           <Panel
             title="About this workspace"
@@ -488,10 +476,10 @@ export function FleetScreen({ tab }: { tab: Tab }) {
                 web, iOS and Android, adapted from dororolkp/pirate.
               </Text>
               <Text style={s.caption}>
-                Acme Warehouse and Felix are demo workspace labels, not
-                authenticated accounts. Multi-robot operations, user
-                authentication, live teleoperation and a full backend mission
-                history are outside this MVP.
+                Felix&apos;s workspace is a local label, not an authenticated
+                account. This MVP connects one robot through David&apos;s
+                backend. Multi-robot operations, authentication and live manual
+                teleoperation remain future work.
               </Text>
             </View>
           </Panel>

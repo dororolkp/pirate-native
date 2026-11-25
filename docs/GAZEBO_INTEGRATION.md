@@ -1,5 +1,11 @@
 # Gazebo Cooperation and Modular Monolith
 
+## Current Fleet Integration
+
+Felix's React Native frontend now connects [David's ROS backend](https://github.com/davidcheungo123/ros_backend) for A/B autonomous missions and robot telemetry. See [current REST contract](ROS_BACKEND_INTEGRATION.md) and [highlighted frontend guide](FRONTEND_GUIDE.md). David's server chooses its mock/Gazebo adapter. The separate manual driving lab described below remains a local preview; its disabled Connect button is not the fleet API connection button in Settings.
+
+The proposed manual-control gateway schemas below remain future design notes, not endpoints consumed by this release.
+
 ## Verified Source
 
 Reference: https://github.com/painpongpoint/Gazebo-Simulator at commit `b0f69479b645dea097dc55b9c023f237986e7817`.

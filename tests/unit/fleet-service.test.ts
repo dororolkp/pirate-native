@@ -3,6 +3,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ApiFleetService, DemoFleetService } from "../../src/lib/fleet-service";
 import { FleetSnapshot } from "../../src/lib/fleet-domain";
 import { createDemo } from "../../src/lib/demo-simulator";
+import { backendRobot, backendTask } from "./backend-fixtures";
+import type { BackendRobot } from "../../src/lib/backend-contract";
 
 const response = (body: unknown, status = 200) =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -12,12 +14,16 @@ describe("Cross-platform HTTP adapter", () => {
   let snapshot: FleetSnapshot | undefined;
   let issue: string | undefined;
   let stop: (() => void) | undefined;
-  let robot: FleetSnapshot["robot"];
+  let robot: BackendRobot;
   beforeEach(() => {
-    robot = createDemo().robot;
+    robot = backendRobot();
     snapshot = undefined;
     issue = undefined;
-    fetcher = vi.fn().mockImplementation(() => response([robot]));
+    fetcher = vi
+      .fn()
+      .mockImplementation((url: string) =>
+        response(url.includes("?") ? [] : [robot]),
+      );
     vi.stubGlobal("fetch", fetcher);
     service = new ApiFleetService("https://robot.example");
   });
@@ -35,15 +41,15 @@ describe("Cross-platform HTTP adapter", () => {
   }
   it("uses authoritative heartbeat and documented URLs", async () => {
     await connect();
-    expect(snapshot?.robot.heartbeat_at).toBe(robot.heartbeat_at);
+    expect(snapshot?.robot.heartbeat_at).toBe(robot.updated_at);
     expect(fetcher.mock.calls[0][0]).toBe(
       "https://robot.example/api/v1/robots",
     );
   });
-  it("accepts wrapped robot snapshots", async () => {
+  it("rejects undocumented wrapped robot snapshots", async () => {
     fetcher.mockImplementation(() => response({ robots: [robot] }));
     await connect();
-    expect(snapshot?.robot.robot_id).toBe("robot_01");
+    expect(issue).toContain("documented contract");
   });
   it("does not fall back to demo on malformed or unavailable API", async () => {
     fetcher.mockImplementation(() => response([{ battery: 999 }]));
@@ -81,24 +87,19 @@ describe("Cross-platform HTTP adapter", () => {
   });
   it("does not optimistically acknowledge live cancellation", async () => {
     await connect();
-    const task = {
-      ...createDemo().missions[0],
-      task_id: "t_01",
-      status: "running",
-      progress: 20,
-    };
+    const task = backendTask();
     fetcher.mockImplementation((url: string, options: RequestInit) => {
       if (options.method === "POST" && url.endsWith("/tasks"))
         return response({ task_id: "t_01", state: "queued" }, 201);
       if (options.method === "POST")
         return response({ state: "cancel_requested" });
       if (url.endsWith("/robots")) return response([robot]);
-      return response(task);
+      return response(url.includes("?") ? [task] : task);
     });
     await service.dispatch("station_b");
-    await service.cancel("t_01");
+    await expect(service.cancel("t_01")).rejects.toThrow();
     expect(snapshot?.missions[0].status).toBe("running");
-    task.status = "canceled";
+    task.state = "canceled";
     await service.refresh();
     expect(snapshot?.missions[0].status).toBe("canceled");
   });
@@ -109,7 +110,7 @@ describe("Cross-platform HTTP adapter", () => {
         return response({ task_id: "t_01", state: "queued" }, 201);
       if (url.endsWith("/robots")) return response([robot]);
       return response({
-        ...createDemo().missions[0],
+        ...backendTask(),
         task_id: "t_01",
         robot_id: "wrong",
       });
@@ -130,12 +131,127 @@ describe("Cross-platform HTTP adapter", () => {
     const first = service.dispatch("station_b");
     await expect(service.dispatch("station_a")).rejects.toThrow("pending");
     accept(new Response(JSON.stringify({ task_id: "t_01", state: "queued" })));
-    fetcher.mockImplementation(() => response([robot]));
+    fetcher.mockImplementation((url: string) =>
+      response(url.includes("?") ? [] : [robot]),
+    );
     await first;
     expect(snapshot?.missions[0].task_id).toBe("t_01");
   });
   it("rejects live simulation controls", async () => {
     await expect(service.demo()).rejects.toThrow("unavailable");
+  });
+  it("restores an existing backend mission on initial connection", async () => {
+    robot.state = "busy";
+    robot.current_task_id = "t_01";
+    const task = backendTask();
+    fetcher.mockImplementation((url: string) =>
+      response(
+        url.endsWith("/robots") ? [robot] : url.includes("?") ? [task] : task,
+      ),
+    );
+    await connect();
+    expect(snapshot?.missions[0]).toMatchObject({
+      task_id: "t_01",
+      status: "running",
+      progress: 20,
+    });
+    await expect(service.dispatch("station_a")).rejects.toThrow("busy");
+    expect(service.canSwitch()).toBe(false);
+  });
+  it("acknowledges cancellation only for the matching task and robot", async () => {
+    robot.state = "busy";
+    robot.current_task_id = "t_01";
+    let task = backendTask();
+    fetcher.mockImplementation((url: string, options: RequestInit) => {
+      if (options.method === "POST") {
+        task = backendTask({
+          state: "canceled",
+          finished_at: new Date().toISOString(),
+        });
+        robot.state = "idle";
+        robot.current_task_id = null;
+        return response(task);
+      }
+      return response(
+        url.endsWith("/robots") ? [robot] : url.includes("?") ? [task] : task,
+      );
+    });
+    await connect();
+    await service.cancel("t_01");
+    expect(snapshot?.missions[0].status).toBe("canceled");
+    expect(service.canSwitch()).toBe(true);
+  });
+  it("does not lock the session after a definitive backend rejection", async () => {
+    await connect();
+    fetcher.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          detail: { code: "robot_busy", message: "Robot is busy" },
+        }),
+        { status: 409 },
+      ),
+    );
+    await expect(service.dispatch("station_b")).rejects.toThrow(
+      "Robot is busy",
+    );
+    expect(service.canSwitch()).toBe(true);
+    await service.refresh();
+    expect(issue).toBeUndefined();
+  });
+  it("polls at 500ms and limits idle history reads to every five seconds", async () => {
+    vi.useFakeTimers();
+    stop = service.subscribe(() => {});
+    try {
+      await service.refresh();
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(
+        fetcher.mock.calls.filter(([url]) => url.endsWith("/robots")),
+      ).toHaveLength(5);
+      expect(
+        fetcher.mock.calls.filter(([url]) => url.includes("?")),
+      ).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(
+        fetcher.mock.calls.filter(([url]) => url.includes("?")),
+      ).toHaveLength(2);
+    } finally {
+      stop();
+      stop = undefined;
+      vi.useRealTimers();
+    }
+  });
+  it("does not resurrect running state from a read started before cancellation", async () => {
+    robot.state = "busy";
+    robot.current_task_id = "t_01";
+    const running = backendTask();
+    fetcher.mockImplementation((url: string) =>
+      response(
+        url.endsWith("/robots")
+          ? [robot]
+          : url.includes("?")
+            ? [running]
+            : running,
+      ),
+    );
+    await connect();
+    let deliver!: (value: Response) => void;
+    fetcher.mockImplementation((url: string, options: RequestInit) => {
+      if (options.method === "POST")
+        return response(backendTask({ state: "canceled" }));
+      if (url.endsWith("/robots")) return response([robot]);
+      return new Promise<Response>((resolve) => {
+        deliver = resolve;
+      });
+    });
+    const reading = service.refresh();
+    await vi.waitFor(() => expect(deliver).toBeDefined());
+    const canceling = service.cancel("t_01");
+    await vi.waitFor(() =>
+      expect(snapshot?.missions[0].status).toBe("canceled"),
+    );
+    deliver(new Response(JSON.stringify(running)));
+    await Promise.all([reading, canceling]);
+    expect(snapshot?.missions[0].status).toBe("canceled");
   });
 });
 describe("Asynchronous native and web persistence", () => {
@@ -232,11 +348,13 @@ describe("Polling and persistence resource budgets", () => {
   });
   it("backs off failed polling, recovers and pauses in the background", async () => {
     vi.useFakeTimers();
-    const robot = createDemo().robot;
+    const robot = backendRobot();
     const fetcher = vi
       .fn()
       .mockRejectedValueOnce(new Error("offline"))
-      .mockImplementation(() => response([robot]));
+      .mockImplementation((url: string) =>
+        response(url.includes("?") ? [] : [robot]),
+      );
     vi.stubGlobal("fetch", fetcher);
     const service = new ApiFleetService("https://robot.example");
     const stop = service.subscribe(() => {});
@@ -246,13 +364,19 @@ describe("Polling and persistence resource budgets", () => {
       await vi.advanceTimersByTimeAsync(2000);
       expect(fetcher).toHaveBeenCalledOnce();
       await vi.advanceTimersByTimeAsync(2000);
-      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(
+        fetcher.mock.calls.filter(([url]) => url.endsWith("/robots")),
+      ).toHaveLength(2);
       service.setActive(false);
       await vi.advanceTimersByTimeAsync(20_000);
-      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(
+        fetcher.mock.calls.filter(([url]) => url.endsWith("/robots")),
+      ).toHaveLength(2);
       service.setActive(true);
       await service.refresh();
-      expect(fetcher).toHaveBeenCalledTimes(3);
+      expect(
+        fetcher.mock.calls.filter(([url]) => url.endsWith("/robots")),
+      ).toHaveLength(3);
     } finally {
       stop();
     }

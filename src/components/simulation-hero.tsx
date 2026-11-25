@@ -5,7 +5,11 @@ import { HeroArt } from "./hero-art";
 import { MaximalistPattern } from "./maximalist-pattern";
 import { useLayoutWidth } from "../hooks/use-layout-width";
 
-export const SimulationHero = memo(function SimulationHero() {
+export const SimulationHero = memo(function SimulationHero({
+  live = false,
+}: {
+  live?: boolean;
+}) {
   const width = useLayoutWidth();
   return (
     <View
@@ -59,16 +63,18 @@ export const SimulationHero = memo(function SimulationHero() {
         <Text
           style={[s.text, { color: "#f6edff", maxWidth: 490, fontSize: 14 }]}
         >
-          One focused workspace for warehouse missions, fleet insights and
-          Gazebo driving previews. Start locally; connect an approved gateway
-          when it is ready.
+          One focused workspace for warehouse missions and fleet insights.
+          Connect David&apos;s backend for live A/B navigation, or practice
+          safely in the local demo.
         </Text>
         <View style={s.row}>
-          {["Ackermann steering", "Touch + keyboard", "Backend idle"].map(
-            (label) => (
-              <Badge key={label} label={label} />
-            ),
-          )}
+          {[
+            "Ackermann steering",
+            "Touch + keyboard",
+            live ? "API selected" : "Local demo",
+          ].map((label) => (
+            <Badge key={label} label={label} />
+          ))}
         </View>
         <View
           style={{

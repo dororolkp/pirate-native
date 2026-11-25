@@ -18,6 +18,11 @@ import {
   STATIONS,
 } from "../lib/fleet-domain";
 import { Badge, Button, colors, Panel, s } from "./ui";
+import {
+  WORLD_BOUNDS,
+  WORLD_STATIONS,
+  worldToMap,
+} from "../lib/backend-contract";
 
 export function WarehouseMap({
   snapshot,
@@ -32,13 +37,36 @@ export function WarehouseMap({
   const [labels, setLabels] = useState(true);
   const task = activeMission(snapshot);
   const robot = snapshot.robot;
+  const stations = live
+    ? {
+        station_a: {
+          ...STATIONS.station_a,
+          ...worldToMap(WORLD_STATIONS.station_a),
+        },
+        station_b: {
+          ...STATIONS.station_b,
+          ...worldToMap(WORLD_STATIONS.station_b),
+        },
+      }
+    : STATIONS;
+  const world = robot.worldPose;
+  const outside =
+    world &&
+    (world.x < WORLD_BOUNDS.minX ||
+      world.x > WORLD_BOUNDS.maxX ||
+      world.y < WORLD_BOUNDS.minY ||
+      world.y > WORLD_BOUNDS.maxY);
   const online = robot.connected && !isStale(robot, now);
   const width = 800 / zoom;
   const height = 390 / zoom;
   return (
     <Panel
       title="Live warehouse map"
-      subtitle="Warehouse 01 / Ground floor"
+      subtitle={
+        live
+          ? "Configured Gazebo world frame / not an occupancy map"
+          : "Warehouse 01 / Ground floor"
+      }
       action={
         <Badge
           label={live ? "LIVE API" : "DEMO LIVE"}
@@ -55,7 +83,7 @@ export function WarehouseMap({
         >
           <Text style={s.label}>WAREHOUSE 01</Text>
           <Text style={[s.caption, { fontSize: 10 }]}>
-            Application map units
+            {live ? "Metres / radians" : "Application map units"}
           </Text>
         </View>
         <View style={{ width: "100%", aspectRatio: 800 / 390, minHeight: 180 }}>
@@ -63,7 +91,11 @@ export function WarehouseMap({
             width="100%"
             height="100%"
             viewBox={`${(800 - width) / 2} ${(390 - height) / 2} ${width} ${height}`}
-            accessibilityLabel={`Warehouse map. ${robot.name} at x ${Math.round(robot.pose.x)}, y ${Math.round(robot.pose.y)}. ${task ? `Heading to ${STATIONS[task.destination].label}.` : "No active mission."}`}
+            accessibilityLabel={
+              live && !world
+                ? "Warehouse map. Robot pose unavailable. Waiting for backend telemetry."
+                : `Warehouse map. ${robot.name} at x ${world ? world.x.toFixed(2) : Math.round(robot.pose.x)}, y ${world ? world.y.toFixed(2) : Math.round(robot.pose.y)}${world ? " metres" : ""}. ${task ? `Heading to ${STATIONS[task.destination].label}.` : "No active mission."}`
+            }
             accessibilityRole="image"
           >
             <Defs>
@@ -87,77 +119,81 @@ export function WarehouseMap({
               stroke="#cbd2d9"
               strokeWidth="3"
             />
-            <Rect
-              x="91"
-              y="187"
-              width="618"
-              height="66"
-              rx="5"
-              fill="#f0f2f4"
-            />
-            <Path d="M105 220H696" stroke="#d8dfe6" strokeDasharray="5 6" />
-            {[0, 1, 2, 3].map((index) => (
-              <G key={index}>
-                {[82, 274].map((y) => (
-                  <G key={y}>
-                    <Rect
-                      x={209 + index * 104}
-                      y={y}
-                      width="74"
-                      height="61"
-                      rx="3"
-                      fill="#e7ebef"
-                      stroke="#cbd3db"
-                    />
-                    {[1, 2].map((n) => (
-                      <Line
-                        key={n}
-                        x1={209 + index * 104 + n * 24}
-                        x2={209 + index * 104 + n * 24}
-                        y1={y + 6}
-                        y2={y + 55}
-                        stroke="#cbd3db"
-                      />
+            {!live && (
+              <G>
+                <Rect
+                  x="91"
+                  y="187"
+                  width="618"
+                  height="66"
+                  rx="5"
+                  fill="#f0f2f4"
+                />
+                <Path d="M105 220H696" stroke="#d8dfe6" strokeDasharray="5 6" />
+                {[0, 1, 2, 3].map((index) => (
+                  <G key={index}>
+                    {[82, 274].map((y) => (
+                      <G key={y}>
+                        <Rect
+                          x={209 + index * 104}
+                          y={y}
+                          width="74"
+                          height="61"
+                          rx="3"
+                          fill="#e7ebef"
+                          stroke="#cbd3db"
+                        />
+                        {[1, 2].map((n) => (
+                          <Line
+                            key={n}
+                            x1={209 + index * 104 + n * 24}
+                            x2={209 + index * 104 + n * 24}
+                            y1={y + 6}
+                            y2={y + 55}
+                            stroke="#cbd3db"
+                          />
+                        ))}
+                        <Line
+                          x1={215 + index * 104}
+                          x2={277 + index * 104}
+                          y1={y + 30}
+                          y2={y + 30}
+                          stroke="#cbd3db"
+                        />
+                      </G>
                     ))}
-                    <Line
-                      x1={215 + index * 104}
-                      x2={277 + index * 104}
-                      y1={y + 30}
-                      y2={y + 30}
-                      stroke="#cbd3db"
-                    />
+                    {labels && (
+                      <SvgText
+                        x={246 + index * 104}
+                        y="163"
+                        textAnchor="middle"
+                        fontSize="10"
+                        fill="#85919d"
+                      >
+                        AISLE 0{index + 1}
+                      </SvgText>
+                    )}
                   </G>
                 ))}
                 {labels && (
                   <SvgText
-                    x={246 + index * 104}
-                    y="163"
+                    x="400"
+                    y="69"
                     textAnchor="middle"
                     fontSize="10"
                     fill="#85919d"
+                    letterSpacing="2"
                   >
-                    AISLE 0{index + 1}
+                    STORAGE ZONE
                   </SvgText>
                 )}
               </G>
-            ))}
-            {labels && (
-              <SvgText
-                x="400"
-                y="69"
-                textAnchor="middle"
-                fontSize="10"
-                fill="#85919d"
-                letterSpacing="2"
-              >
-                STORAGE ZONE
-              </SvgText>
             )}
-            {Object.entries(STATIONS).map(([key, station]) => (
+            {Object.entries(stations).map(([key, station]) => (
               <G key={key}>
                 <Rect
                   x={station.x - 33}
-                  y="188"
+                  y={station.y - 32}
                   width="66"
                   height="64"
                   rx="7"
@@ -167,13 +203,13 @@ export function WarehouseMap({
                 />
                 <Circle
                   cx={station.x}
-                  cy="220"
+                  cy={station.y}
                   r="15"
                   fill={key === "station_a" ? "#d1e3d8" : "#ffdac1"}
                 />
                 <SvgText
                   x={station.x}
-                  y="225"
+                  y={station.y + 5}
                   textAnchor="middle"
                   fontWeight="700"
                   fontSize="13"
@@ -185,7 +221,7 @@ export function WarehouseMap({
                   <G>
                     <SvgText
                       x={station.x}
-                      y="270"
+                      y={station.y + 50}
                       textAnchor="middle"
                       fontSize="12"
                       fontWeight="600"
@@ -195,18 +231,20 @@ export function WarehouseMap({
                     </SvgText>
                     <SvgText
                       x={station.x}
-                      y="285"
+                      y={station.y + 65}
                       textAnchor="middle"
                       fontSize="9"
                       fill="#85919d"
                     >
-                      {station.description}
+                      {live
+                        ? `${WORLD_STATIONS[key as keyof typeof WORLD_STATIONS].x}, ${WORLD_STATIONS[key as keyof typeof WORLD_STATIONS].y} m`
+                        : station.description}
                     </SvgText>
                   </G>
                 )}
               </G>
             ))}
-            {task && (
+            {task && !live && (
               <Path
                 d={`M${task.origin.x} ${task.origin.y} L${STATIONS[task.destination].x} ${STATIONS[task.destination].y}`}
                 stroke="#ed8751"
@@ -229,49 +267,51 @@ export function WarehouseMap({
                 <Path d="M393 208l14 22m-14 0l14-22" stroke="#bb884b" />
               </G>
             )}
-            <G transform={`translate(${robot.pose.x},${robot.pose.y})`}>
-              <Circle
-                r="35"
-                fill={online ? colors.orange : "#8d98a6"}
-                opacity="0.1"
-              />
-              <Circle
-                r="25"
-                fill="none"
-                stroke={online ? colors.orange : "#8d98a6"}
-                strokeOpacity="0.25"
-              />
-              <G transform={`rotate(${(robot.pose.yaw * 180) / Math.PI})`}>
-                <Rect
-                  x="-17"
-                  y="-14"
-                  width="34"
-                  height="28"
-                  rx="7"
+            {(!live || world) && (
+              <G transform={`translate(${robot.pose.x},${robot.pose.y})`}>
+                <Circle
+                  r="35"
                   fill={online ? colors.orange : "#8d98a6"}
-                  stroke="white"
-                  strokeWidth="2"
+                  opacity="0.1"
                 />
-                <Path
-                  d="M-3 -5L5 0L-3 5"
-                  stroke="white"
-                  strokeWidth="2"
+                <Circle
+                  r="25"
                   fill="none"
+                  stroke={online ? colors.orange : "#8d98a6"}
+                  strokeOpacity="0.25"
                 />
+                <G transform={`rotate(${(robot.pose.yaw * 180) / Math.PI})`}>
+                  <Rect
+                    x="-17"
+                    y="-14"
+                    width="34"
+                    height="28"
+                    rx="7"
+                    fill={online ? colors.orange : "#8d98a6"}
+                    stroke="white"
+                    strokeWidth="2"
+                  />
+                  <Path
+                    d="M-3 -5L5 0L-3 5"
+                    stroke="white"
+                    strokeWidth="2"
+                    fill="none"
+                  />
+                </G>
+                {labels && (
+                  <SvgText
+                    x="0"
+                    y="-41"
+                    textAnchor="middle"
+                    fill={colors.ink}
+                    fontWeight="700"
+                    fontSize="11"
+                  >
+                    {robot.name}
+                  </SvgText>
+                )}
               </G>
-              {labels && (
-                <SvgText
-                  x="0"
-                  y="-41"
-                  textAnchor="middle"
-                  fill={colors.ink}
-                  fontWeight="700"
-                  fontSize="11"
-                >
-                  {robot.name}
-                </SvgText>
-              )}
-            </G>
+            )}
           </Svg>
         </View>
         <View style={[s.row, { padding: 16, justifyContent: "space-between" }]}>
@@ -318,15 +358,38 @@ export function WarehouseMap({
         ]}
       >
         <Text style={s.caption}>
-          Position {Math.round(robot.pose.x)}, {Math.round(robot.pose.y)} / yaw{" "}
-          {robot.pose.yaw.toFixed(2)}
+          {live && !world ? (
+            "Position unavailable. Waiting for a valid backend pose."
+          ) : (
+            <>
+              Position {world ? world.x.toFixed(2) : Math.round(robot.pose.x)},{" "}
+              {world ? world.y.toFixed(2) : Math.round(robot.pose.y)}
+              {world ? " m / theta " : " / yaw "}
+              {(world?.theta ?? robot.pose.yaw).toFixed(2)}
+              {world ? " rad" : ""}
+            </>
+          )}
         </Text>
         <Text
           style={[s.caption, { color: online ? colors.green : colors.red }]}
         >
-          {online ? "Fresh telemetry" : "Offline / stale"}
+          {online
+            ? live
+              ? "Fresh API response"
+              : "Fresh telemetry"
+            : "Offline / stale"}
         </Text>
       </View>
+      {live && (
+        <Text style={[s.caption, { padding: 16 }]}>
+          {world
+            ? `Pose updated: ${new Date(robot.heartbeat_at).toLocaleString()}. `
+            : "No authoritative robot pose has been received. "}
+          {outside
+            ? "Robot is outside the configured map extent. Do not infer its location from the diagram; use the metre coordinates above and ask the backend operator to verify the station configuration."
+            : "North (+Y) is up; +X is right. Stations match David's default config.py. No scenario/map API is currently available."}
+        </Text>
+      )}
     </Panel>
   );
 }

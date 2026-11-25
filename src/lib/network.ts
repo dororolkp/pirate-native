@@ -96,7 +96,12 @@ export class JsonApiClient {
         throw new ApiRequestError(
           typeof detail === "string"
             ? detail.slice(0, 300)
-            : `API request failed (${response.status}).`,
+            : detail &&
+                typeof detail === "object" &&
+                "message" in detail &&
+                typeof detail.message === "string"
+              ? detail.message.slice(0, 300)
+              : `API request failed (${response.status}).`,
           "http",
           response.status,
           retryAfterDelay(response.headers.get("Retry-After")),

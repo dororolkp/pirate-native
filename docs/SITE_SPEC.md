@@ -10,24 +10,24 @@ Reference: `startup project/pirate` at `d5b4f30`, with original domain, simulato
 
 ## Platforms and Scope
 
-| Target  | Runtime/build                                     | Layout                                         |
-| ------- | ------------------------------------------------- | ---------------------------------------------- |
+| Target  | Runtime/build                                    | Layout                                         |
+| ------- | ------------------------------------------------ | ---------------------------------------------- |
 | Web     | Expo Router static route HTML + client hydration | Desktop sidebar or responsive mobile tabs      |
-| iOS     | React Native, Expo modules, Hermes                | Safe-area-aware native views, touch navigation |
-| Android | React Native, Expo modules, Hermes                | Safe-area-aware native views, touch navigation |
+| iOS     | React Native, Expo modules, Hermes               | Safe-area-aware native views, touch navigation |
+| Android | React Native, Expo modules, Hermes               | Safe-area-aware native views, touch navigation |
 
 One configured robot is supported. No authentication, real fleet reservation, multi-robot traffic management, backend database, ROS/Gazebo runtime, push notifications, continuous background tracking or live joystick teleoperation is included.
 
 ## Routes
 
-| Route        | Screen    | Responsibility                                                                                                 |
-| ------------ | --------- | -------------------------------------------------------------------------------------------------------------- |
-| `/`          | Overview  | Metrics, map, command center, activity chart, performance, recent records and events                           |
-| `/robots`    | Robots    | Map, robot status, dispatch/cancel, demo stop/manual steps and event timeline                                  |
-| `/missions`  | Missions  | Search, filters, pagination, details, CSV, timestamps and task events                                          |
-| `/analytics` | Analytics | Reporting period, timestamp-derived chart and mission performance                                              |
-| `/settings`  | Settings  | Mode/API configuration display, retry telemetry, scenarios, connection simulation, reset and integration notes |
-| `/logbook` | Logbook | Private local event filters, pagination, export, clear and recording preferences |
+| Route        | Screen    | Responsibility                                                                                                         |
+| ------------ | --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `/`          | Overview  | Metrics, map, command center, activity chart, performance, recent records and events                                   |
+| `/robots`    | Robots    | Map, robot status, dispatch/cancel, demo stop/manual steps and event timeline                                          |
+| `/missions`  | Missions  | Search, filters, pagination, details, CSV, timestamps and task events                                                  |
+| `/analytics` | Analytics | Reporting period, timestamp-derived chart and mission performance                                                      |
+| `/settings`  | Settings  | Validated session-only API setup, retry telemetry, local scenarios, connection simulation, reset and integration notes |
+| `/logbook`   | Logbook   | Private local event filters, pagination, export, clear and recording preferences                                       |
 
 Direct web URLs and reloads use per-route static HTML and clean URLs. Native deep links use the `pirate-native` scheme, for example `pirate-native://robots`. Normal navigation stays inside one FleetProvider so changing routes does not reset active work.
 
@@ -43,7 +43,7 @@ Ariel is a curated local guidance component available in Robots, Settings and He
 - Demo workspace: Acme Warehouse / Warehouse 01.
 - Operator label: Local operator / No account connected. This is not an authentication or authorization claim.
 - Navigation: desktop sidebar at widths >=1050; otherwise six bottom destinations.
-- Header: current workspace/screen, explicit SIMULATION or LIVE API badge, notifications and help.
+- Header: current workspace/screen, explicit SIMULATION or LIVE API badge, notifications, help and Start guided tour.
 - Content: scrollable operational workspace with fixed navigation outside the scroll container.
 - Global notices: command outcome/errors, storage warnings and connection failures.
 - Help: in-app walkthrough explaining simulation, safety and primary controls.
@@ -78,7 +78,7 @@ Maps/charts are `react-native-svg` vector elements; UI icons are Lucide React Na
 - A visible safe-demo banner explains that all demo telemetry/history is simulated.
 - Reporting period: All time, Today (local calendar midnight), Last 7 days (rolling).
 - Metrics: total missions, online robot count, completed missions and success rate.
-- Online is determined from connected state, fresh robot-origin heartbeat and transport health.
+- Demo online uses its local heartbeat. Live online uses backend connected state, recent successful API receipt and transport health; original pose-update time remains visible.
 - A warehouse map, command center, mission activity chart, performance panel, five-row recent ledger and event timeline share the same state.
 - New mission opens a destination confirmation, defaulting to the opposite dock when Atlas is at Station B.
 
@@ -159,16 +159,16 @@ Mission history is capped at 200 and events at 60. AsyncStorage writes are seria
 
 ## Live Transport Requirements
 
-- Public build-time URL selects the HTTP service; empty URL selects simulation.
-- Poll every two seconds on healthy native/web connections; failed reads back off to 30 seconds (60 with Retry-After). Live polling pauses in background.
+- Public build-time URL selects the initial HTTP service; empty URL selects simulation. Settings can explicitly choose a session-only URL.
+- Poll robot/current-task every 500ms and history every five seconds; failed reads back off to 30 seconds (60 with Retry-After). Live polling pauses in background.
 - Validate robots/tasks with Zod. No simulated fallback after live failure.
-- Heartbeat is authoritative robot telemetry. Older-than-ten-second or implausibly future timestamps block dispatch.
+- Preserve the backend pose-update timestamp; gate dispatch on recent successful API receipt and backend connected/idle state. Demo uses heartbeat age.
 - Requests time out at eight seconds.
 - No automatic mutation retry.
 - Accepted task IDs are retained before follow-up snapshots.
 - Ambiguous creation response locks dispatch for the current session; the operator must reconcile backend state before restarting.
 - Cancellation requires final backend acknowledgment.
-- Live history only covers task IDs created in the session because the supplied contract lacks history/current-task routes.
+- Live history loads the 200 newest backend tasks and discovers the robot's current task, including other-client work.
 - Browser SSE was replaced by portable polling. The original `/events` endpoint can remain on the server but is not required by this client.
 
 ## Accessibility and Safety
@@ -186,20 +186,20 @@ Keyboard navigation and screen readers should be validated on final target devic
 
 ## Original-App Parity and Deliberate Changes
 
-| Original Next.js Feature                  | React Native Edition                                   |
-| ----------------------------------------- | ------------------------------------------------------ |
+| Original Next.js Feature                  | React Native Edition                                    |
+| ----------------------------------------- | ------------------------------------------------------- |
 | Five original workspace tabs              | Six routable screens/deep links including local Logbook |
-| Desktop sidebar + mobile drawer           | Sidebar + persistent touch navigation                  |
-| Warehouse SVG and map tools               | Native-compatible SVG with same map frame and controls |
-| Dispatch/cancel/manual/scenarios          | Shared simulator and native controls                   |
-| localStorage persistence                  | AsyncStorage across web and native                     |
-| HTTP + browser SSE/poll fallback          | Validated portable HTTP polling                        |
-| Browser CSV export                        | Browser download + native sharing                      |
-| Chart styles/ranges and reporting filters | Retained with shared timestamp-derived data            |
-| Search in header/ledger                   | Search in dedicated mission ledger                     |
-| HTML dialogs                              | Native Modal confirmation/detail/help overlays         |
+| Desktop sidebar + mobile drawer           | Sidebar + persistent touch navigation                   |
+| Warehouse SVG and map tools               | Native-compatible SVG with same map frame and controls  |
+| Dispatch/cancel/manual/scenarios          | Shared simulator and native controls                    |
+| localStorage persistence                  | AsyncStorage across web and native                      |
+| HTTP + browser SSE/poll fallback          | Validated portable HTTP polling                         |
+| Browser CSV export                        | Browser download + native sharing                       |
+| Chart styles/ranges and reporting filters | Retained with shared timestamp-derived data             |
+| Search in header/ledger                   | Search in dedicated mission ledger                      |
+| HTML dialogs                              | Native Modal confirmation/detail/help overlays          |
 
-No claim is made that a physical robot, simulator backend, vendor API or certified stopping circuit has been integrated.
+David's actual FastAPI mock adapter is integration-tested. No claim is made that a physical robot, Luis's running Gazebo world or a certified stopping circuit was tested. See [current contract](ROS_BACKEND_INTEGRATION.md).
 
 ## Acceptance Criteria
 

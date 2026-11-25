@@ -14,16 +14,22 @@ import {
   DemoFleetService,
   FleetService,
 } from "../lib/fleet-service";
-import { FleetSnapshot, StationId } from "../lib/fleet-domain";
+import { activeMission, FleetSnapshot, StationId } from "../lib/fleet-domain";
 import { activityStore, ActivityCode } from "../lib/activity-store";
+import { normalizeBackendUrl } from "../lib/backend-contract";
 
-function record(code: ActivityCode, outcome: "ok" | "failed" | "info") {
+function writeRecord(
+  code: ActivityCode,
+  outcome: "ok" | "failed" | "info",
+  isLive: boolean,
+) {
   void activityStore
-    .record(code, outcome, API_BASE ? "live" : "demo")
+    .record(code, outcome, isLive ? "live" : "demo")
     .catch(() => undefined);
 }
 
 function useFleetController() {
+  const [apiBase, setApiBase] = useState(API_BASE);
   const [snapshot, setSnapshot] = useState<FleetSnapshot | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState<string | null>(null);
@@ -34,31 +40,38 @@ function useFleetController() {
   const service = useRef<FleetService | null>(null);
   const busy = useRef(false);
   const mounted = useRef(false);
+  const switching = useRef(false);
+  function record(code: ActivityCode, outcome: "ok" | "failed" | "info") {
+    writeRecord(code, outcome, Boolean(apiBase));
+  }
   useEffect(() => {
     mounted.current = true;
     let alive = true;
     let previousIssue: boolean | undefined;
     let previousTasks = new Map<string, string>();
-    record("workspace_opened", "info");
-    const instance: FleetService = API_BASE
-      ? new ApiFleetService(API_BASE)
+    writeRecord("workspace_opened", "info", Boolean(apiBase));
+    const instance: FleetService = apiBase
+      ? new ApiFleetService(apiBase)
       : new DemoFleetService();
     service.current = instance;
+    switching.current = false;
     const stop = instance.subscribe((data, issue) => {
       if (!alive) return;
-      const unhealthy = Boolean(API_BASE && issue);
+      const unhealthy = Boolean(apiBase && issue);
       if (previousIssue !== undefined && previousIssue !== unhealthy)
-        record(
+        writeRecord(
           unhealthy ? "telemetry_unavailable" : "telemetry_recovered",
           unhealthy ? "failed" : "ok",
+          Boolean(apiBase),
         );
       previousIssue = unhealthy;
       for (const task of data.missions) {
         const previous = previousTasks.get(task.task_id);
         if (previous && previous !== task.status && task.status !== "queued")
-          record(
+          writeRecord(
             `mission_${task.status}` as ActivityCode,
             task.status === "failed" ? "failed" : "ok",
+            Boolean(apiBase),
           );
       }
       previousTasks = new Map(
@@ -66,7 +79,7 @@ function useFleetController() {
       );
       setSnapshot(data);
       setNow(Date.now());
-      setConnectionError(Boolean(API_BASE && issue));
+      setConnectionError(Boolean(apiBase && issue));
       setTelemetryError(issue ?? null);
     });
     const clock = setInterval(() => setNow(Date.now()), 1000);
@@ -75,7 +88,7 @@ function useFleetController() {
       const update =
         state === "active"
           ? instance.refresh()
-          : !API_BASE
+          : !apiBase
             ? instance.demo("manual-off")
             : undefined;
       // Never retain demo manual mode when the app is backgrounded.
@@ -94,13 +107,49 @@ function useFleetController() {
       appState.remove();
       service.current = null;
     };
-  }, []);
+  }, [apiBase]);
+  function connectBackend(value: string) {
+    try {
+      if (
+        switching.current ||
+        busy.current ||
+        (snapshot &&
+          (activeMission(snapshot) || snapshot.robot.status === "busy")) ||
+        service.current?.canSwitch?.() === false
+      )
+        throw new Error(
+          "Finish or cancel active work and reconcile unknown command outcomes before switching connections.",
+        );
+      const base = value.trim() ? normalizeBackendUrl(value) : "";
+      setError(null);
+      setTelemetryError(null);
+      setNotice(
+        base
+          ? "Backend selected. Waiting for authoritative telemetry."
+          : "Local demo selected. No backend commands will be sent.",
+      );
+      setConnectionError(Boolean(base));
+      if (base !== apiBase) {
+        switching.current = true;
+        setSnapshot(null);
+        setApiBase(base);
+      } else {
+        void service.current
+          ?.refresh()
+          .catch(() => setError("Could not refresh the selected connection."));
+      }
+      return true;
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : "Invalid backend URL.");
+      return false;
+    }
+  }
   async function act(
     action: (instance: FleetService) => Promise<void>,
     success: string,
     code: ActivityCode,
   ) {
-    if (!service.current || busy.current) return false;
+    if (!service.current || busy.current || switching.current) return false;
     busy.current = true;
     setPending(true);
     setError(null);
@@ -131,7 +180,9 @@ function useFleetController() {
     notice,
     pending,
     connectionError,
-    isLive: Boolean(API_BASE),
+    isLive: Boolean(apiBase),
+    apiBase,
+    connectBackend,
     dismiss: () => {
       setError(null);
       setTelemetryError(null);
@@ -146,8 +197,8 @@ function useFleetController() {
     cancel: (id: string) =>
       act(
         (s) => s.cancel(id),
-        API_BASE
-          ? "Cancellation requested. Waiting for backend acknowledgment."
+        apiBase
+          ? "Backend acknowledged cancellation. Check robot status before new work."
           : "Mission canceled. Simulated motion stopped.",
         "mission_cancel",
       ),

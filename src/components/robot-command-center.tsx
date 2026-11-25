@@ -25,12 +25,15 @@ export function RobotCommandCenter({
   if (!snapshot) return null;
   const robot = snapshot.robot;
   const task = activeMission(snapshot);
+  const latest = snapshot.missions[0];
   const online =
     robot.connected && !isStale(robot, fleet.now) && !fleet.connectionError;
-  const dispatchLocked =
-    fleet.pending ||
-    fleet.connectionError ||
-    Boolean(dispatchError(snapshot, "station_b", fleet.now));
+  const blocked = fleet.pending
+    ? "Waiting for the current command."
+    : fleet.connectionError
+      ? "Backend telemetry is unavailable. Check Settings and refresh."
+      : dispatchError(snapshot, "station_b", fleet.now);
+  const dispatchLocked = Boolean(blocked);
   return (
     <Panel
       title="Robot command center"
@@ -79,10 +82,22 @@ export function RobotCommandCenter({
           </View>
           <View style={s.row}>
             <Battery size={18} color={colors.green} />
-            <Text style={s.text}>{robot.battery}%</Text>
+            <Text style={s.text}>
+              {robot.battery === null
+                ? "Battery not reported"
+                : `${robot.battery}%`}
+            </Text>
           </View>
         </View>
         <Text style={s.label}>QUICK DISPATCH</Text>
+        {blocked && (
+          <Text
+            accessibilityLiveRegion="polite"
+            style={[s.caption, { color: colors.orange }]}
+          >
+            {blocked}
+          </Text>
+        )}
         <Button
           label="Send to Station B"
           primary
@@ -131,8 +146,9 @@ export function RobotCommandCenter({
             />
           </View>
         ) : (
-          <Text style={s.caption}>
-            No active mission. Choose a destination to start a delivery.
+          <Text accessibilityLiveRegion="polite" style={s.caption}>
+            {latest && fleet.isLive ? `Latest task: ${latest.status}. ` : ""}No
+            active mission. Choose a destination to start a delivery.
           </Text>
         )}
         {fleet.isLive ? (

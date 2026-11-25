@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { LucideIcon } from "lucide-react-native";
 import { visualAttributes } from "../lib/visual-attributes";
 import { colors, maximalist } from "../lib/theme";
+import { useGuidedTour } from "../hooks/use-guided-tour";
+import { guideId } from "../lib/guide-steps";
 
 export { colors, maximalist } from "../lib/theme";
 export function Button({
@@ -24,6 +26,8 @@ export function Button({
   selected?: boolean;
   compact?: boolean;
 }) {
+  const target = `button-${guideId(label)}`;
+  const highlighted = useGuidedTour()?.step?.target === target;
   return (
     <Pressable
       accessibilityRole="button"
@@ -34,12 +38,17 @@ export function Button({
       }}
       disabled={disabled}
       onPress={onPress}
-      {...visualAttributes("button", danger ? "danger" : "regular")}
+      {...visualAttributes("button", danger ? "danger" : "regular", target)}
       style={({ pressed }) => [
         s.button,
         primary && s.primary,
         danger && s.danger,
         selected && s.selected,
+        highlighted && {
+          borderWidth: 3,
+          borderColor: maximalist.violet,
+          boxShadow: "0 0 0 4px #ff8bc5",
+        },
         (disabled || pressed) && { opacity: disabled ? 0.45 : 0.75 },
       ]}
     >

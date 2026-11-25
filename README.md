@@ -2,7 +2,7 @@
 
 **Fleet & mission control for things that move.**
 
-A new Expo + React Native application that recreates the Pirate Next.js dashboard for **web, iOS, and Android**, using native views, shared domain logic, SVG maps/charts, and Expo Router.
+An Expo + React Native application for **web, iOS, and Android**, using native views, shared domain logic, SVG maps/charts, and Expo Router. Felix's robotics MVP connects [David's ROS backend](https://github.com/davidcheungo123/ros_backend) for one robot and Station A/B navigation. No Next.js migration is required.
 
 - Repository: https://github.com/dororolkp/pirate-native
 - Website: https://pirate-native.vercel.app
@@ -13,7 +13,9 @@ A new Expo + React Native application that recreates the Pirate Next.js dashboar
 
 ## Gazebo Driving Lab
 
-The Robots screen now includes colorful Gazebo Harmonic driving previews based on [painpongpoint/Gazebo-Simulator](https://github.com/painpongpoint/Gazebo-Simulator). Choose speed and hold a direction to inspect Ackermann velocity commands. **Gazebo backend remains idle: no commands, sockets or API calls are sent.** Atlas warehouse missions remain an independent local demo.
+The Robots screen includes colorful Gazebo Harmonic driving previews based on [painpongpoint/Gazebo-Simulator](https://github.com/painpongpoint/Gazebo-Simulator). That pad remains a **local command preview**, not live teleoperation. Separately, **Settings -> Connect backend** enables David's REST A/B tasks, robot telemetry and mission history. His backend selects mock versus Gazebo; the app does not publish ROS commands directly.
+
+Select **Start guided tour** in the header for highlighted, step-by-step explanations across all screens. Read [Felix's Frontend Guide](docs/FRONTEND_GUIDE.md) for setup, a team-demo workflow and a complete button reference, and [ROS Backend Integration](docs/ROS_BACKEND_INTEGRATION.md) for verified payloads and map conversion.
 
 Ariel provides curated local guidance, not a remote AI service. The modular monolith keeps simulator domain rules, UI, fleet transport and web infrastructure separate inside one app and release unit.
 
@@ -140,13 +142,13 @@ EXPO_PUBLIC_API_BASE_URL=https://your-approved-backend.example
 EXPO_PUBLIC_ROBOT_ID=robot_01
 ```
 
-Use an empty API URL for the demo. Restart Metro with `npx expo start --clear`, or rebuild/deploy after changing settings. `EXPO_PUBLIC_*` values are compiled into the client and are **not secrets**.
+Use an empty API URL for the demo. Restart Metro with `npx expo start --clear`, or rebuild/deploy after changing build-time values. `EXPO_PUBLIC_*` values are compiled into the client and are **not secrets**. Alternatively, enter a validated base URL in Settings for the current session; that selection is not saved or tracked.
 
-Healthy native and web connections poll every two seconds, validate JSON with Zod, and disable dispatch if robot heartbeat is older than ten seconds, disconnected, busy, manual, or unavailable. Failed reads back off up to 30 seconds (up to 60 seconds for Retry-After); live polling pauses in background. Requests have an eight-second deadline. Commands are not automatically retried; ambiguous creation replies lock dispatch for the session until the operator reconciles the backend before restarting. Live cancellation stays active until backend status reports `canceled`.
+Healthy native and web connections poll robot/active task state every 500ms and recent history every five seconds. Zod validates David's schemas; connected/idle state, transport health and recent API receipt gate dispatch. Source pose-update timestamps are preserved rather than fabricated as idle heartbeats. Failed reads back off up to 30 seconds (60 for Retry-After); polling pauses in background. Requests have an eight-second deadline. Commands never retry automatically; ambiguous creation replies lock dispatch pending operator reconciliation. Cancellation requires the matching task's canceled response.
 
-Use HTTPS for deployed/mobile integrations. A phone's `localhost` is the phone, not your computer. No login/auth protocol was supplied by the original API; do not publish real robot controls without agreed authentication, authorization, audit logging, network isolation and robot-side stopping. Live manual teleoperation and global/history task discovery are intentionally unavailable.
+Use HTTPS for deployed/mobile integrations with approved CORS origins. A phone's `localhost` is the phone, not your computer. David's repository does not provide a hosted API URL or an authentication protocol; do not publish real robot controls without authentication, authorization, network isolation and robot-side stopping. Live history loads up to 200 backend tasks, including other-client work. Live manual teleoperation is intentionally unavailable. The map uses David's configured metre stations; no scenario API is currently published.
 
-See [API Contract](docs/API_CONTRACT.md) for payloads, CORS, emulator addresses, adapter responsibilities, and limitations.
+See [ROS Backend Integration](docs/ROS_BACKEND_INTEGRATION.md) for current payloads, CORS, emulator addresses, adapter responsibilities, tests and limitations.
 
 ## Tests and Maintenance
 
@@ -172,6 +174,8 @@ npm run generate:icons
 
 Browser tests run against the production export in demo mode. Stop another server on port 8081 before testing, or set `TEST_BASE_URL` to a running preview. Traces and QA screenshots are written to your OS temporary directory. TypeScript 6/Vitest assertion types need a larger Node stack here; `typecheck` supplies it and still checks source and tests.
 
+New browser coverage checks the full highlighted workflow without POST commands, David's intercepted API payloads, failure handling and 320px guide usability. `backend-live.spec.ts` is opt-in through `LIVE_BACKEND_TEST_URL` and only for an isolated mock server; it deliberately sends real REST tasks. See the integration guide before running it.
+
 Hook tests use Vitest, React Testing Library and jsdom with mocked React Native APIs and fleet services. `use-fleet.test.ts` covers the internal controller through `FleetProvider` and `useFleet`: service selection, telemetry/clock updates, command forwarding and notices, pending-command exclusivity, errors/recovery, AppState behavior, shared context and unmount cleanup. `use-layout-width.test.ts` covers browser resizing, iOS/Android dimension selection, static HTML hydration and subscription cleanup including Strict Mode. `use-logbook.test.ts` checks local-store hydration, updates, cleanup and private server-rendering boundaries. These exercise real React lifecycles, not physical devices or a live backend; service implementations are covered separately by adapter/domain tests. `npm test` and CI include the hook tests automatically.
 
 Scoped npm overrides replace vulnerable `minimatch` transitive versions for Expo fingerprinting and TypeScript ESLint with 11.0.8+. Do not use `npm audit fix --force`: its suggested Expo downgrade would break SDK compatibility. Review overrides when upgrading Expo.
@@ -180,13 +184,15 @@ Scoped npm overrides replace vulnerable `minimatch` transitive versions for Expo
 
 The Uiverse-inspired visual system uses original vector artwork, deferred web illustration/animation chunks and reduced-motion support. See [Visual Design and CDN Delivery](docs/VISUAL_DESIGN.md) and [third-party credits](THIRD_PARTY_NOTICES.md). No remote image hotlinks or additional animation library is needed.
 
-| Document                                         | Contents                                                         |
-| ------------------------------------------------ | ---------------------------------------------------------------- |
-| [Site Specification](docs/SITE_SPEC.md)          | Screens, visual tokens, state model, parity, acceptance criteria |
-| [Build and Deployment](docs/BUILD_AND_DEPLOY.md) | Detailed commands, SDK setup, Vercel, EAS, stores, team access   |
-| [API Contract](docs/API_CONTRACT.md)             | Payload schemas, errors, networking, safety boundaries           |
-| [Gazebo Integration](docs/GAZEBO_INTEGRATION.md) | Idle driving lab, proposed gateway, modular monolith, SEO/GA4    |
-| [Delivery Status](docs/DELIVERY_STATUS.md)       | Actual delivery evidence and remaining credential-dependent work |
+| Document                                                   | Contents                                                         |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| [Site Specification](docs/SITE_SPEC.md)                    | Screens, visual tokens, state model, parity, acceptance criteria |
+| [Build and Deployment](docs/BUILD_AND_DEPLOY.md)           | Detailed commands, SDK setup, Vercel, EAS, stores, team access   |
+| [API Contract](docs/API_CONTRACT.md)                       | Payload schemas, errors, networking, safety boundaries           |
+| [Frontend Guide](docs/FRONTEND_GUIDE.md)                   | Felix's setup, highlighted workflow and every control's purpose  |
+| [ROS Backend Integration](docs/ROS_BACKEND_INTEGRATION.md) | David's current API, metre conversion, history and safety        |
+| [Gazebo Integration](docs/GAZEBO_INTEGRATION.md)           | Idle driving lab, proposed gateway, modular monolith, SEO/GA4    |
+| [Delivery Status](docs/DELIVERY_STATUS.md)                 | Actual delivery evidence and remaining credential-dependent work |
 
 `src/app/` contains Expo Router routes. `src/components/` implements responsive native UI. `src/hooks/use-fleet.tsx` owns one shared fleet session across routes. `src/lib/` contains domain rules, simulator, asynchronous persistence, HTTP adapter and platform-specific CSV export. Tests cover domain, transport, persistence and rendered web interaction.
 

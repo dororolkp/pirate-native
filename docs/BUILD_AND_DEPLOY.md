@@ -54,6 +54,8 @@ These are **public build-time values**. Changing them requires a new bundle/buil
 
 For EAS profiles configure the same non-secret values through the selected Expo build environment or profile `env` settings. Production defaults to a demo unless an API URL is supplied; verify the environment before shipping.
 
+Settings also offers a validated **session-only** backend URL and an explicit Connect backend button. This does not modify build-time configuration or persist credentials/URLs. Use David's server base URL without `/api/v1`, with HTTPS and CORS for deployed web. His GitHub repository is not a hosted endpoint. See [Frontend Guide](FRONTEND_GUIDE.md) for mock-server setup and [ROS Backend Integration](ROS_BACKEND_INTEGRATION.md) for the verified payloads.
+
 ## 3. Web Development and Local Production
 
 ```bash

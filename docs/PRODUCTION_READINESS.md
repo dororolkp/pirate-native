@@ -2,7 +2,7 @@
 
 ## Scope and Honest Status
 
-This upgrade improves the shared web/iOS/Android client. It does **not** start a Gazebo gateway, create authentication, apply a production database migration, certify robot stopping, or publish native binaries. Gazebo stays idle and its Connect button stays disabled. The existing fleet HTTP adapter is used only when an API base is explicitly configured.
+This upgrade improves the shared web/iOS/Android client. It does **not** start a Gazebo gateway, create authentication, apply a production database migration, certify robot stopping, or publish native binaries. The separate driving preview stays local-only. The fleet adapter connects David's actual robot/task API only when a server is explicitly selected. See [ROS Backend Integration](ROS_BACKEND_INTEGRATION.md) for authoritative details.
 
 The database migration is a tested backend design artifact, not a database running inside the app. GA4 requires the owner's real measurement ID and opt-in. No analytics account or reporting dashboard has been provisioned automatically.
 
@@ -27,7 +27,8 @@ Patterns in use: service ports/adapters, a shared application controller, a smal
 ## UX and Content
 
 - Six destinations: Overview, Robots, Missions, Analytics, Logbook and Settings.
-- Overview introduces the workspace with a compact violet concept diagram; Robots prioritizes operational tools instead of repeating a large hero.
+- Overview and Robots prioritize map and dispatch controls; decorative artwork follows operational tools.
+- A highlighted, route-aware guide explains controls without submitting commands or changing consent.
 - Operations status communicates transport failure, disconnection, staleness and manual mode before the user dispatches.
 - Status is derived from telemetry, not decorative uptime, fabricated trends or a fake authenticated avatar.
 - Keyboard users can skip navigation to the main workspace. Headings have explicit levels, focus is visible, and reduced-motion preferences are respected.
@@ -38,7 +39,7 @@ This is not a claim of certified WCAG conformance. VoiceOver/TalkBack and actual
 
 ## Network and Performance
 
-Healthy live reads poll every two seconds. Consecutive failed reads back off to 4, 8, 16 and 30 seconds. A valid `Retry-After` can extend the delay up to 60 seconds. Manual refresh bypasses the scheduling delay but still coalesces with an in-flight read. Successful reads restore the normal interval.
+Healthy robot/current-task reads poll every 500ms; recent task history refreshes every five seconds and after mutations. Consecutive failed reads back off to 4, 8, 16 and 30 seconds. A valid `Retry-After` can extend the delay up to 60 seconds. Manual refresh bypasses the scheduling delay but still coalesces with an in-flight read. Successful reads restore the normal interval.
 
 HTTP requests have an eight-second deadline. Invalid API URLs with credentials, query strings or fragments are rejected. Request headers are preserved and responses remain schema-validated. Unsubscription aborts outstanding requests; live polling pauses in background/inactive AppState and resumes on foreground.
 
@@ -143,4 +144,4 @@ npm audit
 
 Tests cover network timeout/cancellation/backoff, mutation safety, persistence budgets, logbook validation/privacy/retention, hook cleanup/hydration, SQL constraints/index use, static metadata and analytics allowlists. Browser tests verify logbook workflows, keyboard access and unchanged idle Gazebo behavior.
 
-Still required before real robot control: approved API contracts, authentication/authorization, current-task discovery, command reconciliation/idempotency, control leases, robot-side deadman/protective stopping, trusted coordinate frames, native device testing and a signed release. These are operational and safety requirements, not merely styling tasks.
+The current API supplies task-list/current-task discovery and configured metre coordinates. Still required before real robot control: authentication/authorization, reconciliation/idempotency, manual control leases/deadman/protective stopping, verification of Luis's actual coordinate frame, native device testing and a signed release. These are operational and safety requirements, not merely styling tasks.

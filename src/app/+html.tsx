@@ -42,6 +42,7 @@ export default function RootHtml({ children }: PropsWithChildren) {
           }
           [data-ui="panel"] { box-shadow: 5px 6px 0 #e4c9ee; }
           [data-ui="metric"] { position: relative; overflow: hidden; box-shadow: 4px 5px 0 #34204b; }
+          [data-guide-highlight="true"] { outline: 4px solid #5020a0 !important; outline-offset: 3px; }
           @media (hover: hover) {
             [data-ui="button"][data-variant="regular"]:not([aria-disabled="true"]):hover { border-color: #7664c5; }
             [data-ui="button"][data-variant="regular"]:not([aria-disabled="true"]):hover::after { transform: translateX(120%); }

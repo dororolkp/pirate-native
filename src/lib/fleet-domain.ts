@@ -1,4 +1,4 @@
-/** Application map units are not ROS meters. Coordinate conversion belongs to the adapter. */
+/** Demo/map coordinates are pixels; live robots also retain their authoritative world pose. */
 export type StationId = "station_a" | "station_b";
 export type Scenario = "normal" | "obstacle" | "timeout";
 export type TaskStatus =
@@ -23,8 +23,10 @@ export interface Robot {
   connected: boolean;
   status: "idle" | "busy" | "manual" | "offline";
   pose: { x: number; y: number; yaw: number };
-  battery: number;
+  worldPose?: { x: number; y: number; theta: number };
+  battery: number | null;
   heartbeat_at: string;
+  api_received_at?: string;
 }
 export interface Mission {
   task_id: string;
@@ -59,7 +61,7 @@ export const activeMission = (snapshot: FleetSnapshot) =>
     (m) => m.status === "queued" || m.status === "running",
   );
 export function isStale(robot: Robot, now = Date.now()) {
-  const heartbeat = Date.parse(robot.heartbeat_at);
+  const heartbeat = Date.parse(robot.api_received_at ?? robot.heartbeat_at);
   return (
     !Number.isFinite(heartbeat) ||
     now - heartbeat > 10_000 ||
@@ -76,7 +78,9 @@ export function dispatchError(
   if (!snapshot.robot.connected || snapshot.robot.status === "offline")
     return "Robot is disconnected. Reconnect before dispatching.";
   if (isStale(snapshot.robot, now))
-    return "Telemetry is stale. Wait for a fresh robot heartbeat.";
+    return snapshot.robot.api_received_at
+      ? "API telemetry is stale. Refresh the backend connection."
+      : "Telemetry is stale. Wait for a fresh robot heartbeat.";
   if (snapshot.manual || snapshot.robot.status === "manual")
     return "Disable manual mode before starting an autonomous mission.";
   if (activeMission(snapshot) || snapshot.robot.status === "busy")

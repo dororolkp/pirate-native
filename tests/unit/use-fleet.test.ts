@@ -227,7 +227,7 @@ describe("useFleet and FleetProvider", () => {
       await result.current.cancel("task_01");
     });
     expect(result.current.notice).toBe(
-      "Cancellation requested. Waiting for backend acknowledgment.",
+      "Backend acknowledged cancellation. Check robot status before new work.",
     );
   });
   it("blocks concurrent commands immediately, before a pending rerender", async () => {
@@ -422,5 +422,70 @@ describe("useFleet and FleetProvider", () => {
     expect(result.current.snapshot).toBeNull();
     publish();
     expect(result.current.snapshot).not.toBeNull();
+  });
+  it("switches to a validated backend and ignores expired demo callbacks", () => {
+    const { result } = mount();
+    publish();
+    const obsolete = listener;
+    act(() =>
+      expect(result.current.connectBackend(" https://fleet.example/ ")).toBe(
+        true,
+      ),
+    );
+    expect(result.current.apiBase).toBe("https://fleet.example");
+    expect(result.current.snapshot).toBeNull();
+    expect(result.current.isLive).toBe(true);
+    expect(mocks.unsubscribe).toHaveBeenCalledOnce();
+    expect(mocks.apiConstructor).toHaveBeenCalledWith("https://fleet.example");
+    act(() => obsolete(createDemo(), "Expired demo"));
+    expect(result.current.snapshot).toBeNull();
+  });
+  it("rejects unsafe connection URLs without selecting a live service", () => {
+    const { result } = mount();
+    act(() =>
+      expect(
+        result.current.connectBackend("https://user:secret@fleet.example"),
+      ).toBe(false),
+    );
+    expect(result.current.isLive).toBe(false);
+    expect(result.current.error).toContain("without credentials");
+    expect(mocks.apiConstructor).not.toHaveBeenCalled();
+  });
+  it("prevents switching while a mission or command is active", async () => {
+    const { result } = mount();
+    const data = createDemo();
+    data.robot.status = "busy";
+    act(() => listener(data));
+    act(() =>
+      expect(result.current.connectBackend("https://fleet.example")).toBe(
+        false,
+      ),
+    );
+    publish();
+    const waiting = deferred();
+    mocks.dispatch.mockReturnValueOnce(waiting.promise);
+    let command!: Promise<boolean>;
+    act(() => {
+      command = result.current.dispatch("station_b");
+      expect(result.current.connectBackend("https://fleet.example")).toBe(
+        false,
+      );
+    });
+    await act(async () => {
+      waiting.resolve();
+      await command;
+    });
+    expect(mocks.apiConstructor).not.toHaveBeenCalled();
+  });
+  it("can explicitly return to demo without persisting or reporting the URL", () => {
+    mocks.apiBase = "https://fleet.example";
+    const { result } = mount();
+    publish();
+    act(() => expect(result.current.connectBackend("")).toBe(true));
+    expect(result.current.isLive).toBe(false);
+    expect(mocks.demoConstructor).toHaveBeenCalledOnce();
+    expect(mocks.recordActivity.mock.calls.flat()).not.toContain(
+      "https://fleet.example",
+    );
   });
 });

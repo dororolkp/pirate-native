@@ -2,6 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { z } from "zod";
 import { ApiRequestError, JsonApiClient, pollingDelay } from "./network";
 import {
+  adaptRobot,
+  adaptTask,
+  backendRobotSchema,
+  backendTaskSchema,
+} from "./backend-contract";
+import {
   activeMission,
   dispatchError,
   FleetSnapshot,
@@ -91,6 +97,7 @@ export interface FleetService {
   demo(command: DemoCommand): Promise<void>;
   refresh(): Promise<void>;
   setActive?(active: boolean): void;
+  canSwitch?(): boolean;
 }
 const clone = (snapshot: FleetSnapshot): FleetSnapshot =>
   JSON.parse(JSON.stringify(snapshot));
@@ -202,11 +209,11 @@ export function emptyLiveSnapshot(): FleetSnapshot {
   return {
     robot: {
       robot_id: ROBOT_ID,
-      name: "Atlas",
+      name: ROBOT_ID,
       connected: false,
       status: "offline",
       pose: { x: 140, y: 220, yaw: 0 },
-      battery: 0,
+      battery: null,
       heartbeat_at: "1970-01-01T00:00:00.000Z",
     },
     missions: [],
@@ -228,6 +235,8 @@ export class ApiFleetService implements FleetService {
   private active = true;
   private failures = 0;
   private nextPollAt = 0;
+  private historyAt = 0;
+  private revision = 0;
   constructor(baseUrl: string) {
     this.client = new JsonApiClient(baseUrl);
   }
@@ -243,11 +252,21 @@ export class ApiFleetService implements FleetService {
     if (!this.active || this.stopped) return;
     this.timer = setInterval(() => {
       if (Date.now() >= this.nextPollAt) void this.refresh();
-    }, 2000);
+    }, 500);
   }
   setActive(active: boolean) {
     this.active = active;
     this.startPolling();
+  }
+  canSwitch() {
+    return (
+      !this.mutating &&
+      !this.ambiguous &&
+      !(
+        this.snapshot &&
+        (activeMission(this.snapshot) || this.snapshot.robot.status === "busy")
+      )
+    );
   }
   private publish() {
     if (!this.stopped)
@@ -280,28 +299,48 @@ export class ApiFleetService implements FleetService {
     return this.refreshing;
   }
   private async fetchSnapshot() {
+    const revision = this.revision;
     try {
       const raw = await this.request("/robots");
-      const robots = Array.isArray(raw)
-        ? z.array(robotSchema).parse(raw)
-        : z.object({ robots: z.array(robotSchema) }).parse(raw).robots;
-      const robot = robots.find((r) => r.robot_id === ROBOT_ID);
-      if (!robot)
+      const backendRobot = z
+        .array(backendRobotSchema)
+        .parse(raw)
+        .find((r) => r.robot_id === ROBOT_ID);
+      if (!backendRobot)
         throw new Error("Configured robot is missing from the API response.");
+      const robot = adaptRobot(backendRobot);
       const task = this.snapshot && activeMission(this.snapshot);
-      const updated = task
-        ? taskSchema.parse(
-            await this.request(`/tasks/${encodeURIComponent(task.task_id)}`),
+      const taskId = backendRobot.current_task_id ?? task?.task_id;
+      const updated = taskId
+        ? adaptTask(
+            backendTaskSchema.parse(
+              await this.request(`/tasks/${encodeURIComponent(taskId)}`),
+            ),
+            task?.origin,
           )
         : undefined;
       if (
         updated &&
-        (updated.task_id !== task?.task_id || updated.robot_id !== ROBOT_ID)
+        (updated.task_id !== taskId || updated.robot_id !== ROBOT_ID)
       )
         throw new Error(
           "API returned a task for a different robot or task ID.",
         );
-      if (this.stopped) return;
+      if (this.stopped || revision !== this.revision) return;
+      const history =
+        Date.now() >= this.historyAt
+          ? z
+              .array(backendTaskSchema)
+              .max(200)
+              .parse(
+                await this.request(
+                  `/tasks?robot_id=${encodeURIComponent(ROBOT_ID)}&limit=200`,
+                ),
+              )
+          : undefined;
+      if (history?.some((item) => item.robot_id !== ROBOT_ID))
+        throw new Error("API returned history for a different robot.");
+      if (this.stopped || revision !== this.revision) return;
       // Read the latest local list after fetching to preserve concurrently accepted task IDs.
       const snapshot: FleetSnapshot = {
         robot,
@@ -310,10 +349,28 @@ export class ApiFleetService implements FleetService {
         manual: robot.status === "manual",
         scenario: "normal",
       };
-      if (updated) {
-        snapshot.missions = snapshot.missions.map((m) =>
-          m.task_id === updated.task_id ? updated : m,
+      if (history) {
+        // Preserve a concurrently accepted POST, which may not be in the older history read.
+        const known = new Map(
+          snapshot.missions.map((item) => [item.task_id, item]),
         );
+        snapshot.missions = [
+          ...snapshot.missions.filter(
+            (item) => !history.some((entry) => entry.task_id === item.task_id),
+          ),
+          ...history.map((item) =>
+            adaptTask(item, known.get(item.task_id)?.origin),
+          ),
+        ]
+          .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+          .slice(0, 200);
+        this.historyAt = Date.now() + 5000;
+      }
+      if (updated) {
+        snapshot.missions = [
+          updated,
+          ...snapshot.missions.filter((m) => m.task_id !== updated.task_id),
+        ].slice(0, 200);
         if (updated.status !== task?.status)
           addEvent(
             snapshot,
@@ -330,15 +387,16 @@ export class ApiFleetService implements FleetService {
       if (!this.snapshot)
         addEvent(
           snapshot,
-          "Backend connected. Live history is local to this session.",
+          "Backend connected. Loaded up to 200 recent backend missions.",
           "info",
           Date.now(),
         );
       this.snapshot = snapshot;
       this.connectionIssue = undefined;
       this.failures = 0;
-      this.nextPollAt = Date.now() + pollingDelay(0);
+      this.nextPollAt = Date.now() + 500;
     } catch (error) {
+      if (this.stopped || revision !== this.revision) return;
       this.failures += 1;
       this.nextPollAt =
         Date.now() +
@@ -385,11 +443,16 @@ export class ApiFleetService implements FleetService {
           );
       } catch (error) {
         // Even a malformed reply or server error can follow an accepted side effect.
-        this.ambiguous = true;
+        this.ambiguous = !(
+          error instanceof ApiRequestError &&
+          error.kind === "http" &&
+          [400, 404, 409, 422].includes(error.status ?? 0)
+        );
         this.publish();
         throw error;
       }
       const timestamp = new Date().toISOString();
+      this.revision += 1;
       this.snapshot.missions.unshift({
         task_id: result.task_id,
         robot_id: this.snapshot.robot.robot_id,
@@ -412,6 +475,7 @@ export class ApiFleetService implements FleetService {
         result.task_id,
       );
       this.publish();
+      this.historyAt = 0;
       await this.refresh();
     } finally {
       this.mutating = false;
@@ -423,13 +487,27 @@ export class ApiFleetService implements FleetService {
       throw new Error("This mission is no longer active.");
     this.mutating = true;
     try {
-      await this.request(
-        `/tasks/${encodeURIComponent(taskId)}/cancel`,
-        {
+      const response = backendTaskSchema.parse(
+        await this.request(`/tasks/${encodeURIComponent(taskId)}/cancel`, {
           method: "POST",
-        },
-        true,
+        }),
       );
+      if (
+        response.task_id !== taskId ||
+        response.robot_id !== ROBOT_ID ||
+        response.state !== "canceled"
+      )
+        throw new Error(
+          "Backend cancellation was not acknowledged for this mission. Refresh telemetry.",
+        );
+      if (!this.stopped) {
+        this.revision += 1;
+        this.snapshot.missions = this.snapshot.missions.map((m) =>
+          m.task_id === taskId ? adaptTask(response, m.origin) : m,
+        );
+        this.publish();
+      }
+      this.historyAt = 0;
       await this.refresh();
       // HTTP acceptance never changes local status to canceled; robot acknowledgment must do so.
     } finally {

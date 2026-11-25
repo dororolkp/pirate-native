@@ -20,6 +20,7 @@ import {
   Settings2,
   Warehouse,
   X,
+  Route,
 } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -30,6 +31,9 @@ import { WebPresence } from "./web-presence";
 import { ArielAssistant } from "./ariel-assistant";
 import { useLayoutWidth } from "../hooks/use-layout-width";
 import { trackPublicEvent } from "../lib/analytics";
+import { GuidedTourProvider, useGuidedTour } from "../hooks/use-guided-tour";
+import { GuidedTour } from "./guided-tour";
+import { guideAttributes } from "../lib/guide-attributes";
 
 const navigation = [
   { label: "Overview", href: "/" as const, icon: LayoutDashboard },
@@ -89,7 +93,15 @@ export function Dialog({
   );
 }
 export function FleetShell() {
+  return (
+    <GuidedTourProvider>
+      <FleetShellContent />
+    </GuidedTourProvider>
+  );
+}
+function FleetShellContent() {
   const fleet = useFleet();
+  const tour = useGuidedTour()!;
   const path = usePathname();
   const width = useLayoutWidth();
   const desktop = width >= 1050;
@@ -109,6 +121,7 @@ export function FleetShell() {
           <Pressable
             accessibilityRole="link"
             accessibilityLabel={label}
+            {...guideAttributes(`nav-${label.toLowerCase()}`)}
             accessibilityState={{ selected }}
             style={StyleSheet.flatten([
               mobile ? styles.mobileItem : styles.navItem,
@@ -193,8 +206,9 @@ export function FleetShell() {
             <View style={styles.demoCard}>
               <Text style={s.panelTitle}>A brighter driving lab.</Text>
               <Text style={s.caption}>
-                Explore Gazebo previews. Backend stays idle until the gateway is
-                ready.
+                {fleet.isLive
+                  ? "David's API supplies robot telemetry and A/B missions. Manual driving remains a local preview."
+                  : "Practice locally, or connect David's backend in Settings for the team demo."}
               </Text>
               <Button label="Explore the demo" onPress={openHelp} />
             </View>
@@ -215,11 +229,11 @@ export function FleetShell() {
               ]}
             >
               <View style={styles.avatar}>
-                <Text style={{ color: "#a55b37", fontWeight: "700" }}>LO</Text>
+                <Text style={{ color: "#a55b37", fontWeight: "700" }}>FX</Text>
               </View>
               <View>
                 <Text style={[s.text, { fontWeight: "700" }]}>
-                  Local operator
+                  Felix&apos;s workspace
                 </Text>
                 <Text style={s.caption}>No account connected</Text>
               </View>
@@ -253,6 +267,12 @@ export function FleetShell() {
                 tone="orange"
               />
               <Button
+                label="Start guided tour"
+                icon={Route}
+                compact={width < 600}
+                onPress={tour.start}
+              />
+              <Button
                 label="Notifications"
                 icon={Bell}
                 compact={width < 600}
@@ -266,6 +286,7 @@ export function FleetShell() {
               />
             </View>
           </View>
+          <GuidedTour />
           {(fleet.error || fleet.notice) && (
             <View
               accessibilityRole={fleet.error ? "alert" : undefined}
@@ -324,6 +345,14 @@ export function FleetShell() {
         close={() => setHelp(false)}
       >
         <ArielAssistant />
+        <Button
+          label="Start guided tour"
+          primary
+          onPress={() => {
+            setHelp(false);
+            tour.start();
+          }}
+        />
         <Text style={s.panelTitle}>
           Fleet & mission control for things that move.
         </Text>
@@ -331,12 +360,13 @@ export function FleetShell() {
           1. Dispatch Atlas to Station B and watch its position and progress.
         </Text>
         <Text style={s.text}>
-          2. In Robots, try manual control while idle. Autonomous dispatch stays
-          locked until manual mode is disabled.
+          2. In Settings, enter David&apos;s backend URL and select Connect
+          backend. Live mode uses robot/task APIs; the backend determines
+          whether it uses mock or Gazebo.
         </Text>
         <Text style={s.text}>
-          3. In Settings, test obstacle recovery, navigation timeout,
-          disconnect, and reset.
+          3. Local-demo only: test manual steps, obstacle recovery, timeout,
+          disconnect, and reset. These never control the live backend.
         </Text>
         <Text style={s.text}>
           4. In Missions, filter records, inspect timestamps, and export CSV.

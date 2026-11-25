@@ -34,7 +34,7 @@ export function workspaceHealth(
     label: isLive ? "Live telemetry current" : "Local simulation ready",
     tone: "green" as const,
     detail: isLive
-      ? "Backend data is authoritative. Gazebo driving remains idle."
+      ? "David's backend data is authoritative. Its selected adapter handles A/B navigation."
       : "Practice safely. No physical robot is connected.",
   };
 }

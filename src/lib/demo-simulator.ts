@@ -281,7 +281,8 @@ export function tickDemo(snapshot: FleetSnapshot, now = Date.now()) {
     task.status = "completed";
     task.finished_at = iso(now);
     snapshot.robot.status = "idle";
-    snapshot.robot.battery = Math.max(10, snapshot.robot.battery - 1);
+    if (snapshot.robot.battery !== null)
+      snapshot.robot.battery = Math.max(10, snapshot.robot.battery - 1);
     addEvent(
       snapshot,
       `Delivery completed at ${station.label}.`,

@@ -1,6 +1,10 @@
 # Fleet API Contract
 
-Adapted from the original Pirate Next.js integration handoff. The React Native app retains the HTTP payload contract, with portable two-second polling instead of browser-only SSE.
+**Current authoritative contract:** [David's ROS Backend Integration](ROS_BACKEND_INTEGRATION.md). The React Native app now uses David's actual `/api/v1/robots` and `/api/v1/tasks` payloads, metre coordinates, fractional progress, task-list discovery and 500ms polling.
+
+**The sections below are archived notes from the original integration handoff, not the current adapter contract.** Do not implement these legacy payloads (status/yaw/battery/heartbeat, 0–100 API progress, wrapped robots or cancel_requested responses) for this client. See the current contract and [Frontend Guide](FRONTEND_GUIDE.md) instead.
+
+## Archived Original Handoff
 
 ## Ownership and Safety
 
