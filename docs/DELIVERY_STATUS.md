@@ -10,6 +10,8 @@ Local validation: **196 unit/hook/privacy tests and 54 desktop/mobile browser te
 
 CRM/mail/signature providers, advertising pixels, replay SDKs and GTM are not connected. Optional direct GA4 still needs an owner-managed measurement ID and consent. Publishing evidence is the release commit, GitHub Actions run and Ready Vercel deployment, not a claim that external account services were activated.
 
+Fresh CI validation required Expo `58.1.0`, Crypto `58.0.9`, FileSystem `58.0.15`, Router `58.0.33` and Sharing `58.0.24`, while the first local check had cached earlier recommendations. The compatible update uses `expo install --fix`; no dependency exclusions or CI checks were removed. The lockfile retains Linux/Windows platform packages and passes both platform installation dry runs.
+
 ## Visual Upgrade
 
 The 18 November 2026 visual upgrade adds MIT-attributed Uiverse-inspired card/button treatments, a violet hero, colorful geometric reporting cards and original vector driving-world artwork. The web art and finite animation styles load as a separate approximately 4.8 KB chunk near the viewport, with stable fallback geometry, reduced-motion support and isolated chunk failures.
