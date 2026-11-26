@@ -19,10 +19,30 @@ afterEach(() => {
 describe("Allowlisted optional analytics", () => {
   it("never sends native analytics", () =>
     expect(nativeEvent("help_opened")).toBe(false));
+  it("allows native local opt-in counters without remote scripts", async () => {
+    const { insightsStore } = await import("../../src/lib/product-insights");
+    const analytics = await import("../../src/lib/analytics");
+    insightsStore.setEnabled(true);
+    expect(analytics.trackPublicEvent("chart_style_changed")).toBe(true);
+    expect(insightsStore.getSnapshot().counts.chart_style_changed).toBe(1);
+    expect(flags.gtag).not.toHaveBeenCalled();
+    insightsStore.setEnabled(false);
+  });
   it("does not send without affirmative consent", async () => {
     const analytics = await import("../../src/lib/analytics.web");
     expect(analytics.trackPublicEvent("help_opened")).toBe(false);
     expect(flags.gtag).not.toHaveBeenCalled();
+  });
+  it("counts locally without enabling remote consent or tracking private routes", async () => {
+    const { insightsStore } = await import("../../src/lib/product-insights");
+    const analytics = await import("../../src/lib/analytics.web");
+    insightsStore.setEnabled(true);
+    window.history.replaceState(null, "", "/integrations");
+    expect(analytics.trackPublicEvent("help_opened")).toBe(true);
+    expect(insightsStore.getSnapshot().counts.help_opened).toBe(1);
+    expect(localStorage.getItem(ANALYTICS_CONSENT_KEY)).toBeNull();
+    expect(flags.gtag).not.toHaveBeenCalled();
+    insightsStore.setEnabled(false);
   });
   it("sends a fixed event without arbitrary user or robot payloads", async () => {
     localStorage.setItem(ANALYTICS_CONSENT_KEY, "granted");

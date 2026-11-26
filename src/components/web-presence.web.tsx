@@ -85,6 +85,7 @@ export function WebPresence() {
         content={
           path === "/settings" ||
           path === "/logbook" ||
+          path === "/integrations" ||
           !Object.hasOwn(routes, path)
             ? "noindex, follow"
             : "index, follow"

@@ -16,6 +16,7 @@ export function Button({
   icon: Icon,
   selected,
   compact,
+  expanded,
 }: {
   label: string;
   onPress: () => void;
@@ -25,6 +26,7 @@ export function Button({
   icon?: LucideIcon;
   selected?: boolean;
   compact?: boolean;
+  expanded?: boolean;
 }) {
   const target = `button-${guideId(label)}`;
   const highlighted = useGuidedTour()?.step?.target === target;
@@ -32,9 +34,11 @@ export function Button({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      aria-expanded={expanded}
       accessibilityState={{
         disabled: Boolean(disabled),
         selected: Boolean(selected),
+        expanded,
       }}
       disabled={disabled}
       onPress={onPress}
@@ -160,6 +164,7 @@ export const s = StyleSheet.create({
   stack: { gap: 18 },
   button: {
     minHeight: 44,
+    maxWidth: "100%",
     paddingHorizontal: 14,
     paddingVertical: 11,
     borderWidth: 2,
@@ -172,7 +177,12 @@ export const s = StyleSheet.create({
     gap: 8,
     boxShadow: "0 3px 0 #34204b",
   },
-  buttonText: { fontSize: 12, fontWeight: "700", color: colors.ink },
+  buttonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.ink,
+    flexShrink: 1,
+  },
   primary: {
     backgroundColor: maximalist.violet,
     borderColor: maximalist.outline,

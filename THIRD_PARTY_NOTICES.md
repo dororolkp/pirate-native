@@ -17,6 +17,10 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+## Command Menu Reference
+
+The [shadcn/ui command documentation](https://ui.shadcn.com/docs/components/command) informed search/keyboard interaction expectations. The palette is an original React Native implementation; no shadcn, cmdk or Radix source component was copied or installed.
+
 ## Original Artwork
 
 The blue hatchback/warehouse diagrams and geometric decoration are original application vector/layout artwork. No stock photography, external fonts, remote animation players or external image hotlinks are required. A generated raster resource was evaluated but rejected because the service returned a generating placeholder; it is not shipped.

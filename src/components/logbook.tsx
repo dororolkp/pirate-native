@@ -9,7 +9,7 @@ import {
 } from "../lib/activity-store";
 import { exportCsv } from "../lib/export-missions";
 import { Badge, Button, colors, Panel, s } from "./ui";
-import { Dialog } from "./fleet-shell";
+import { Dialog } from "./dialog";
 
 export const Logbook = memo(function Logbook() {
   const journal = useLogbook();

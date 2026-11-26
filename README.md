@@ -31,6 +31,12 @@ Live reads use bounded outage backoff and pause while backgrounded; demo command
 
 The modular-monolith boundaries and tested future SQLite migration are documented in [Production Readiness](docs/PRODUCTION_READINESS.md). SQL is not connected to the client or a running backend. Use `npm run test:sql` to validate it, and `npm run test:hooks` to check all hook modules.
 
+## Free-First Workspace Tools
+
+**Workspace tools** adds safe searchable navigation with Ctrl/Cmd+K on web. `/docs` provides a colorful searchable documentation centre; `/integrations` explains the actual free-stack capabilities and offers optional in-memory product-insight counters. These features use existing React Native primitives, shared hooks and original Uiverse-inspired geometry, without Next.js or new SDK dependencies.
+
+Local insights are off by default, aggregate only three allowlisted UI actions, and clear on disable/reload. They do not enable GA4. CRM, mail hosting, signatures, marketing pixels and session replay are not connected or represented as free integrations. See [Free-First Stack Guide](docs/FREE_STACK.md) for the full technology mapping, usage, privacy and module design.
+
 ## Delivery Status
 
 Web production export and web/iOS/Android JavaScript bundles can be built in this repository. **Exported native bundles are not APK, AAB, IPA, or installable apps.** Signed native builds and store releases need an authenticated Expo account and platform signing/store credentials. See [Delivery Status](docs/DELIVERY_STATUS.md) for verified results and outstanding work.
@@ -96,7 +102,7 @@ npm run build:web
 npm run preview:web
 ```
 
-Open http://localhost:8081. Stop Metro first if it is using the same port. The static website does not need a Node server in production. Routes `/`, `/robots`, `/missions`, `/analytics`, and `/settings` share one Expo application.
+Open http://localhost:8081. Stop Metro first if it is using the same port. The static website does not need a Node server in production. Routes `/`, `/robots`, `/missions`, `/analytics`, `/logbook`, `/settings`, `/docs` and `/integrations` share one Expo application.
 
 ## Native Builds
 

@@ -18,7 +18,7 @@ describe("Static SEO", () => {
       );
     },
   );
-  it.each(["/settings", "/logbook", "/unknown", "toString"])(
+  it.each(["/settings", "/logbook", "/integrations", "/unknown", "toString"])(
     "does not index private or unknown route %s",
     (path) => {
       expect(pageMetadata(path).robots).toMatchObject({

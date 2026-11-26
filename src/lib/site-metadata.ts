@@ -3,7 +3,7 @@ import type { Metadata } from "expo-router/server";
 export const SITE_ROUTES: Record<string, [string, string]> = {
   "/": [
     "Fleet Overview",
-    "Explore Pirate fleet missions and the Gazebo driving laboratory. Safe local simulation with backend integration prepared.",
+    "Explore Pirate fleet missions, David's robot API and the Gazebo driving laboratory. Safe local demo by default.",
   ],
   "/robots": [
     "Gazebo Driving Lab",
@@ -19,11 +19,19 @@ export const SITE_ROUTES: Record<string, [string, string]> = {
   ],
   "/settings": [
     "Workspace Settings",
-    "Review idle Gazebo integration, simulation scenarios and privacy choices.",
+    "Connect David's robot API, review local simulation scenarios and manage optional privacy choices.",
   ],
   "/logbook": [
     "Local Operational Logbook",
     "Review, filter, export or clear private diagnostic events saved only on this device.",
+  ],
+  "/docs": [
+    "Documentation",
+    "Search free React Native workspace guides for API setup, mission controls, safety, privacy and development.",
+  ],
+  "/integrations": [
+    "Free Stack Studio",
+    "Explore free React Native tools, opt-in device-only product insights and honest integration capabilities.",
   ],
 };
 
@@ -37,7 +45,11 @@ export function pageMetadata(path: string): Metadata {
     description,
     applicationName: "Pirate",
     robots: {
-      index: path !== "/settings" && path !== "/logbook" && known,
+      index:
+        path !== "/settings" &&
+        path !== "/logbook" &&
+        path !== "/integrations" &&
+        known,
       follow: true,
     },
     alternates: { canonical: url },
@@ -56,7 +68,7 @@ export function siteStructuredData() {
     operatingSystem: "Web, iOS, Android",
     url: "https://pirate-native.vercel.app/",
     description:
-      "A local fleet simulation and Gazebo command-preview workspace. Backend robot control is not enabled.",
+      "A React Native fleet workspace with optional API integration and free documentation. Backend robot control is not enabled by default.",
     isAccessibleForFree: true,
   };
 }

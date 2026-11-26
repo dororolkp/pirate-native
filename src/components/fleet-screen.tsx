@@ -23,7 +23,7 @@ import {
   MissionHistory,
   statusTone,
 } from "./mission-history";
-import { Dialog } from "./fleet-shell";
+import { Dialog } from "./dialog";
 import { SimulationHero } from "./simulation-hero";
 import { GazeboDrivingLab } from "./gazebo-driving-lab";
 import { ArielAssistant } from "./ariel-assistant";
@@ -268,7 +268,7 @@ export function FleetScreen({ tab }: { tab: Tab }) {
                 !fleet.connectionError
                   ? "1 / 1"
                   : "0 / 1",
-              note: "Atlas / Warehouse 01",
+              note: `${snapshot.robot.name} / Warehouse 01`,
               icon: Bot,
             },
             {
@@ -500,7 +500,9 @@ export function FleetScreen({ tab }: { tab: Tab }) {
         visible={dispatchOpen}
         close={() => setDispatchOpen(false)}
       >
-        <Text style={s.text}>Choose a destination for Atlas.</Text>
+        <Text style={s.text}>
+          Choose a destination for {snapshot.robot.name}.
+        </Text>
         <View style={s.row}>
           {(Object.keys(STATIONS) as StationId[]).map((id) => (
             <Button

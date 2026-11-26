@@ -2,6 +2,14 @@
 
 Initial delivery date: **14 November 2026**.
 
+## Free-First Workspace Upgrade
+
+The 27 November 2026 upgrade retains React Native/Expo and adds searchable documentation, a safe command palette, a truthful integration catalogue and explicit opt-in in-memory product insights. Uiverse-inspired cards, original banner geometry and finite accessibility-aware motion use existing dependencies. See [Free-First Stack](FREE_STACK.md).
+
+Local validation: **196 unit/hook/privacy tests and 54 desktop/mobile browser tests passed**, lint and TypeScript passed, Expo Doctor passed 20/20 and npm audit reported zero vulnerabilities. Two real-backend tests are deliberately skipped unless an isolated mock backend URL is supplied. The new features do not revalidate a physical robot or Luis's shared Gazebo world. Web/Android/iOS bundle exports are build validation, not signed native binaries or device QA.
+
+CRM/mail/signature providers, advertising pixels, replay SDKs and GTM are not connected. Optional direct GA4 still needs an owner-managed measurement ID and consent. Publishing evidence is the release commit, GitHub Actions run and Ready Vercel deployment, not a claim that external account services were activated.
+
 ## Visual Upgrade
 
 The 18 November 2026 visual upgrade adds MIT-attributed Uiverse-inspired card/button treatments, a violet hero, colorful geometric reporting cards and original vector driving-world artwork. The web art and finite animation styles load as a separate approximately 4.8 KB chunk near the viewport, with stable fallback geometry, reduced-motion support and isolated chunk failures.

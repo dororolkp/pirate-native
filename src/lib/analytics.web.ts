@@ -4,6 +4,7 @@ import {
   PUBLIC_EVENTS,
   PublicEvent,
 } from "./analytics-events";
+import { insightsStore } from "./product-insights";
 
 export const measurement = process.env.EXPO_PUBLIC_GA_MEASUREMENT_ID ?? "";
 export const validMeasurement = /^G-[A-Z0-9]+$/.test(measurement);
@@ -27,13 +28,14 @@ export function subscribeConsent(update: () => void) {
   };
 }
 export function trackPublicEvent(event: PublicEvent) {
+  const recordedLocally = insightsStore.record(event);
   if (
     !validMeasurement ||
     !analyticsAllowed() ||
     !PUBLIC_EVENTS.includes(event) ||
     !PUBLIC_ANALYTICS_PATHS.some((path) => path === window.location.pathname)
   )
-    return false;
+    return recordedLocally;
   const analytics = window as AnalyticsWindow;
   if (
     (window as unknown as Record<string, unknown>)[
@@ -41,7 +43,7 @@ export function trackPublicEvent(event: PublicEvent) {
     ] ||
     !analytics.gtag
   )
-    return false;
+    return recordedLocally;
   analytics.gtag("event", event, {
     event_category: "public_workspace_ui",
     page_location: `https://pirate-native.vercel.app${window.location.pathname}`,

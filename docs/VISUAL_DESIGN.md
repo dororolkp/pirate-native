@@ -24,11 +24,13 @@ The web scene reveals once in 650ms; geometric accents drift once for 3.8 second
 
 Vercel delivers the exported site through its [managed CDN](https://vercel.com/docs/cdn). Content-hashed files under `/_expo/static/`, including deferred JavaScript chunks, already use a one-year immutable cache. HTML remains revalidated so releases do not leave stale document/chunk references in browser caches.
 
-This reduces repeated origin delivery and distributes static requests through the hosting provider's edge infrastructure. It is **not** a newly configured backend load-balancer cluster, failover arrangement, or proof of traffic capacity. The robot backend remains idle. There are no third-party image hotlinks, per-user generation calls, API keys or external animation-CDN outages in the rendered workspace.
+This reduces repeated origin delivery and distributes static requests through the hosting provider's edge infrastructure. It is **not** a newly configured backend load-balancer cluster, failover arrangement, or proof of traffic capacity. Live robot tasks require an explicitly configured backend; demo remains the default. There are no third-party image hotlinks, per-user generation calls, API keys or external animation-CDN outages in the rendered workspace.
 
 Vercel's free/Hobby offering is subject to current usage and eligibility limits; it is not unlimited free infrastructure. Check the provider's current terms before commercial production or sustained heavy traffic. Backend scaling, authenticated gateway replicas, control leases and load tests belong to a separate backend release.
 
 ## Verification
+
+The free-stack upgrade adds colorful documentation/capability cards and a shared banner. Only its original decorative starburst gets a 280ms Animated entrance; content stays readable during server rendering. Reduced-motion changes, backgrounding and unmount stop/settle the animation. React Native Web lacks the native `useAnimatedValue` export, so the shared hook uses a stable `Animated.Value` initializer instead. The command palette and extracted dialog keep navigation/help separate from robot mutations. See [Free-First Stack](FREE_STACK.md).
 
 `tests/unit/hero-art.test.ts` checks lazy visibility gating, observer fallback/cleanup, server rendering and failed-art isolation. Native layout gating has a separate component test. Browser tests verify deferred chunk delivery, the failed-chunk fallback, reduced motion, hidden-tab state, responsive overflow and the SVG accessible label. Existing fleet/mission/privacy tests remain the regression baseline.
 

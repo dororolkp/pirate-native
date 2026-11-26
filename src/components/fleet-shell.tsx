@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { Link, Slot, usePathname } from "expo-router";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   Anchor,
   BarChart3,
@@ -19,7 +12,6 @@ import {
   LayoutDashboard,
   Settings2,
   Warehouse,
-  X,
   Route,
 } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,6 +26,8 @@ import { trackPublicEvent } from "../lib/analytics";
 import { GuidedTourProvider, useGuidedTour } from "../hooks/use-guided-tour";
 import { GuidedTour } from "./guided-tour";
 import { guideAttributes } from "../lib/guide-attributes";
+import { Dialog } from "./dialog";
+import { WorkspaceTools } from "./workspace-tools";
 
 const navigation = [
   { label: "Overview", href: "/" as const, icon: LayoutDashboard },
@@ -43,55 +37,6 @@ const navigation = [
   { label: "Logbook", href: "/logbook" as const, icon: BookOpen },
   { label: "Settings", href: "/settings" as const, icon: Settings2 },
 ];
-export function Dialog({
-  title,
-  visible,
-  close,
-  children,
-}: React.PropsWithChildren<{
-  title: string;
-  visible: boolean;
-  close: () => void;
-}>) {
-  if (!visible) return null;
-  return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="fade"
-      onRequestClose={close}
-    >
-      <View style={styles.backdrop}>
-        <View accessibilityViewIsModal style={styles.dialog}>
-          <View
-            style={[
-              s.row,
-              {
-                padding: 20,
-                borderBottomWidth: 1,
-                borderBottomColor: colors.border,
-              },
-            ]}
-          >
-            <Text
-              accessibilityRole="header"
-              style={[s.panelTitle, { flex: 1 }]}
-            >
-              {title}
-            </Text>
-            <Button label="Close dialog" icon={X} onPress={close} />
-          </View>
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={s.body}
-          >
-            {children}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
-}
 export function FleetShell() {
   return (
     <GuidedTourProvider>
@@ -112,7 +57,12 @@ function FleetShellContent() {
     setHelp(true);
   };
   const tab =
-    navigation.find((item) => item.href === path)?.label ?? "Overview";
+    navigation.find((item) => item.href === path)?.label ??
+    (path === "/docs"
+      ? "Documentation"
+      : path === "/integrations"
+        ? "Free stack studio"
+        : "Overview");
   const nav = (mobile = false) =>
     navigation.map(({ label, href, icon: Icon }) => {
       const selected = href === path;
@@ -159,7 +109,7 @@ function FleetShellContent() {
       <StatusBar style="dark" />
       <View style={{ flex: 1, flexDirection: "row" }}>
         {desktop && (
-          <View style={styles.sidebar}>
+          <View key="sidebar" style={styles.sidebar}>
             <Link href="/" asChild>
               <Pressable accessibilityLabel="Pirate home" style={styles.brand}>
                 <View style={styles.mark}>
@@ -186,6 +136,15 @@ function FleetShellContent() {
             </Link>
             <Text style={[s.label, { margin: 14 }]}>WORKSPACE</Text>
             <View style={{ gap: 5 }}>{nav()}</View>
+            <Link href="/docs" style={[s.text, { padding: 14, minHeight: 44 }]}>
+              Documentation
+            </Link>
+            <Link
+              href="/integrations"
+              style={[s.text, { padding: 14, minHeight: 44 }]}
+            >
+              Free stack studio
+            </Link>
             <Text style={[s.label, { margin: 14, marginTop: 28 }]}>
               LOCATIONS
             </Text>
@@ -240,7 +199,7 @@ function FleetShellContent() {
             </View>
           </View>
         )}
-        <View style={{ flex: 1, minWidth: 0 }}>
+        <View key="workspace" style={{ flex: 1, minWidth: 0 }}>
           <View style={styles.topbar}>
             <View style={s.row}>
               {!desktop ? (
@@ -251,6 +210,12 @@ function FleetShellContent() {
                   <Text style={[styles.brandText, { fontSize: 24 }]}>
                     pirate.
                   </Text>
+                  {width < 600 && (
+                    <Badge
+                      label={fleet.isLive ? "LIVE API" : "SIMULATION"}
+                      tone="orange"
+                    />
+                  )}
                 </>
               ) : (
                 <Text style={s.caption}>
@@ -261,11 +226,14 @@ function FleetShellContent() {
                 </Text>
               )}
             </View>
-            <View style={s.row}>
-              <Badge
-                label={fleet.isLive ? "LIVE API" : "SIMULATION"}
-                tone="orange"
-              />
+            <View style={[s.row, { maxWidth: "100%", flexShrink: 1 }]}>
+              {width >= 600 && (
+                <Badge
+                  label={fleet.isLive ? "LIVE API" : "SIMULATION"}
+                  tone="orange"
+                />
+              )}
+              <WorkspaceTools compact={width < 600} />
               <Button
                 label="Start guided tour"
                 icon={Route}
@@ -345,6 +313,20 @@ function FleetShellContent() {
         close={() => setHelp(false)}
       >
         <ArielAssistant />
+        <Link
+          href="/docs"
+          onPress={() => setHelp(false)}
+          style={[s.text, { padding: 14, minHeight: 44 }]}
+        >
+          Read searchable documentation
+        </Link>
+        <Link
+          href="/integrations"
+          onPress={() => setHelp(false)}
+          style={[s.text, { padding: 14, minHeight: 44 }]}
+        >
+          Explore free stack studio
+        </Link>
         <Button
           label="Start guided tour"
           primary
@@ -487,23 +469,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 2,
     borderColor: "transparent",
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(25,36,49,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  dialog: {
-    width: "100%",
-    maxWidth: 620,
-    maxHeight: "85%",
-    backgroundColor: "white",
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: maximalist.outline,
-    boxShadow: "8px 8px 0 #5020a0",
-    overflow: "hidden",
   },
 });

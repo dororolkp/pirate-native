@@ -11,6 +11,14 @@ The application remains Expo / React Native, with Expo Router and shared native 
 
 The Overview prioritizes the map and quick-dispatch controls above decorative artwork and reports.
 
+## Documentation and Workspace Tools
+
+**Workspace tools** in the header opens searchable navigation. Ctrl/Cmd+K works on web; Arrow Up/Down selects, Enter opens, and Escape closes. Closed-menu shortcuts ignore text-editing fields. The menu only navigates or starts the guide, never sends robot commands.
+
+Open `/docs` to search setup, safety, privacy and development guides. Topic filters combine with search; **Read** expands an article and **Clear documentation search** resets filters. Searches stay local and are not tracked.
+
+Open `/integrations` for the **Free stack studio**. It distinguishes included React Native equivalents from optional account-based services and unconnected providers. **Enable local insights** counts only help, mission CSV exports and chart changes in memory. **Clear insight counters** resets counts; **Disable local insights** or reload clears everything. Enabling it does not enable GA4. See [Free-First Stack](FREE_STACK.md) for technology mapping and privacy boundaries.
+
 ## Connect the Backend
 
 David's repository is source code, not a hosted server: [ros_backend](https://github.com/davidcheungo123/ros_backend).
