@@ -12,6 +12,8 @@ CRM/mail/signature providers, advertising pixels, replay SDKs and GTM are not co
 
 Fresh CI validation required Expo `58.1.0`, Crypto `58.0.9`, FileSystem `58.0.15`, Router `58.0.33` and Sharing `58.0.24`, while the first local check had cached earlier recommendations. The compatible update uses `expo install --fix`; no dependency exclusions or CI checks were removed. The lockfile retains Linux/Windows platform packages and passes both platform installation dry runs.
 
+That Windows update pruned two optional `@emnapi` peer records needed by a fresh Vercel install. Their original versions and integrity records were restored without refreshing unrelated dependencies. Clean-install validation uses an isolated temporary directory, not an existing `node_modules` tree.
+
 ## Visual Upgrade
 
 The 18 November 2026 visual upgrade adds MIT-attributed Uiverse-inspired card/button treatments, a violet hero, colorful geometric reporting cards and original vector driving-world artwork. The web art and finite animation styles load as a separate approximately 4.8 KB chunk near the viewport, with stable fallback geometry, reduced-motion support and isolated chunk failures.
