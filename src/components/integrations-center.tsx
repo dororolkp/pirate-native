@@ -39,6 +39,7 @@ export function IntegrationsCenter() {
       </WorkspaceBanner>
       <LocalInsights />
       <TextInput
+        editable={width > 0}
         accessibilityLabel="Search free stack"
         placeholder="Search design, analytics, consent..."
         placeholderTextColor={colors.muted}

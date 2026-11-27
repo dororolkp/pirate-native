@@ -1,3 +1,4 @@
+import { BehaviorSubject, skip } from "rxjs";
 import { PUBLIC_EVENTS, type PublicEvent } from "./analytics-events";
 
 export interface InsightsSnapshot {
@@ -18,39 +19,35 @@ export const EMPTY_INSIGHTS = snapshot(false);
 
 // An opt-in, bounded aggregate store, not a user/session tracking SDK.
 export function createInsightsStore() {
-  let state = EMPTY_INSIGHTS;
-  const listeners = new Set<() => void>();
-  const emit = () => listeners.forEach((listener) => listener());
+  const state = new BehaviorSubject(EMPTY_INSIGHTS);
   return {
-    getSnapshot: () => state,
+    getSnapshot: () => state.value,
     subscribe: (listener: () => void) => {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
+      // React reads the current snapshot itself; notify only subsequent changes.
+      const subscription = state.pipe(skip(1)).subscribe(listener);
+      return () => subscription.unsubscribe();
     },
     setEnabled(enabled: boolean) {
-      if (state.enabled === enabled) return;
-      state = snapshot(enabled);
-      emit();
+      if (state.value.enabled === enabled) return;
+      state.next(snapshot(enabled));
     },
     clear() {
-      state = snapshot(state.enabled);
-      emit();
+      state.next(snapshot(state.value.enabled));
     },
     record(event: string) {
-      if (!state.enabled || !PUBLIC_EVENTS.includes(event as PublicEvent))
+      if (!state.value.enabled || !PUBLIC_EVENTS.includes(event as PublicEvent))
         return false;
       const code = event as PublicEvent;
-      if (state.counts[code] >= 999) return false;
-      state = Object.freeze({
-        enabled: true,
-        counts: Object.freeze({
-          ...state.counts,
-          [code]: state.counts[code] + 1,
+      if (state.value.counts[code] >= 999) return false;
+      state.next(
+        Object.freeze({
+          enabled: true,
+          counts: Object.freeze({
+            ...state.value.counts,
+            [code]: state.value.counts[code] + 1,
+          }),
         }),
-      });
-      emit();
+      );
       return true;
     },
   };

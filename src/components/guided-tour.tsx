@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useGuidedTour } from "../hooks/use-guided-tour";
 import { guideAttributes } from "../lib/guide-attributes";
 import { Button, colors, maximalist, s } from "./ui";
@@ -41,7 +41,6 @@ export function GuidedTour() {
         borderColor: maximalist.outline,
         padding: 12,
         gap: 8,
-        maxHeight: 260,
       }}
     >
       <GuideFocus />
@@ -52,12 +51,12 @@ export function GuidedTour() {
         GUIDED WORKFLOW / Step {tour.index! + 1} of {tour.total} / No automatic
         commands
       </Text>
-      <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ gap: 5 }}>
+      <View style={{ gap: 5 }}>
         <Text accessibilityRole="header" aria-level={2} style={s.panelTitle}>
           {tour.step.title}
         </Text>
         <Text style={s.text}>{tour.step.detail}</Text>
-      </ScrollView>
+      </View>
       <View style={s.row}>
         <Button
           label="Previous step"

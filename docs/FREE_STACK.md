@@ -1,6 +1,6 @@
 # Free-First Universal Frontend
 
-The requested commercial website stack is a reference, not a dependency checklist. This release stays on Expo 58, React Native 0.88 and Expo Router, sharing native views and domain logic across web, iOS and Android. No new package is required for this upgrade.
+The requested commercial website stack is a reference, not a dependency checklist. This release stays on Expo 58, React Native 0.88 and Expo Router, sharing native views and domain logic across web, iOS and Android. RxJS 7.8.2 is installed for the opt-in local aggregate store; UI remains shared native primitives.
 
 ## Included Features
 
@@ -11,7 +11,7 @@ The requested commercial website stack is a reference, not a dependency checklis
 | Radix / Tailwind / shadcn/ui            | Shared native buttons, dialogs, theme and command palette      | No DOM-only framework installed                       |
 | Three.js                                | Original lightweight SVG maps and illustrations                | 2D, not a 3D renderer                                 |
 | GSAP / Lenis                            | Finite Animated decoration and platform scrolling              | Reduced-motion support, no scroll replacement         |
-| RxJS / Segment / Amplitude              | Typed local store and `useSyncExternalStore`                   | Aggregate counters only, no remote analytics pipeline |
+| RxJS / Segment / Amplitude              | Actual RxJS BehaviorSubject and `useSyncExternalStore`         | Aggregate counters only, no remote analytics pipeline |
 | OneTrust                                | Explicit first-party privacy choices                           | Not a certified CMP or legal-compliance guarantee     |
 | Qualified / OptinMonster / HubSpot help | Ariel, searchable docs and highlighted guide                   | No remote chat, lead capture or CRM sync              |
 | Statuspage                              | Fleet/API health and private logbook                           | Not an independently monitored hosted uptime service  |
@@ -31,6 +31,14 @@ Mail hosting, Google Workspace, iCloud Mail, DocuSign, CRM synchronization, adve
 
 The main six mobile navigation destinations remain unchanged. Header tools and Help links expose the new routes without crowding the phone navigation.
 
+## Scrolling and Button Behavior
+
+The workspace has one bounded page scroller containing its header, guide and content. On taller screens the header sticks; on short screens it scrolls away to preserve usable content height. The desktop sidebar scrolls independently. During an active tour, **View current guide** returns to the guide without restarting it; on short screens scroll back to the top to reach that control.
+
+Dialogs keep the close control outside their scrollable body, fit short/landscape viewports and use keyboard avoidance on native. Palette arrows scroll the selected result into view. Read/Close article buttons, mission details, destination selection, Help and Notifications use the same responsive boundaries. Native keyboard avoidance still requires device QA.
+
+Prerendered buttons are disabled and search fields are read-only until the client mounts, so early interaction cannot disappear during hydration. Toggle buttons expose `aria-pressed`; expanded articles expose `aria-expanded`. Web content wraps long identifiers and uses the dynamic viewport height.
+
 ## Local Insights Privacy
 
 Local insights start disabled. Enable explicitly in `/integrations` to count only `help_opened`, `mission_history_exported` and `chart_style_changed`.
@@ -48,18 +56,19 @@ This is a small private diagnostic feature, not equivalent to a multi-user analy
 
 ## Module Design
 
-| Module                         | Responsibility                                                         |
-| ------------------------------ | ---------------------------------------------------------------------- |
-| `src/lib/workspace-catalog.ts` | Pure content, capability status, safe route catalogue and search       |
-| `src/lib/product-insights.ts`  | Immutable bounded snapshots and subscriptions                          |
-| `use-catalog-search`           | Query/topic state and reset                                            |
-| `use-product-insights`         | Shared store subscription with empty server snapshot                   |
-| `use-workspace-tools`          | Palette state, bounded selection and safe navigation                   |
-| `use-command-shortcut.web`     | Browser shortcuts and listener cleanup                                 |
-| `use-command-shortcut`         | Native adapter with no browser dependency                              |
-| `use-entrance-motion`          | Stable Animated value, finite motion, accessibility/background cleanup |
-| `Dialog`                       | Shared accessible modal boundary                                       |
-| Route components               | Documentation/stack layouts, no fleet mutation logic                   |
+| Module                         | Responsibility                                                          |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `src/lib/workspace-catalog.ts` | Pure content, capability status, safe route catalogue and search        |
+| `src/lib/product-insights.ts`  | RxJS current-value subject, immutable bounded snapshots and unsubscribe |
+| `use-catalog-search`           | Query/topic state and reset                                             |
+| `use-product-insights`         | Shared store subscription with empty server snapshot                    |
+| `use-workspace-tools`          | Palette state, bounded selection and safe navigation                    |
+| `use-command-shortcut.web`     | Browser shortcuts and listener cleanup                                  |
+| `use-command-shortcut`         | Native adapter with no browser dependency                               |
+| `use-entrance-motion`          | Stable Animated value, finite motion, accessibility/background cleanup  |
+| `Dialog`                       | Shared accessible modal boundary                                        |
+| `use-client-ready`             | Disabled server controls; interaction only after hydration              |
+| Route components               | Documentation/stack layouts, no fleet mutation logic                    |
 
 The existing fleet provider, backend adapter and task safety rules remain separate. This is still a modular monolith, not multiple service deployments.
 
@@ -80,4 +89,6 @@ npx expo-doctor
 npm audit
 ```
 
-Unit tests cover search, immutability, bounds, opt-in/reset, server privacy, keyboard lifecycle, safe palette actions and motion cleanup. Browser tests cover both new routes, keyboard navigation, no robot POSTs, local insight lifecycle, absent unsolicited trackers, 320px layout, sitemap and noindex metadata. Native bundle export is not device QA or a signed APK/IPA.
+Unit tests cover search, immutability, bounds, RxJS unsubscribe, opt-in/reset, server privacy, hydration readiness, keyboard lifecycle, safe palette actions and motion cleanup. Browser tests cover routes, keyboard navigation, no robot POSTs, local insight lifecycle, absent unsolicited trackers, 320px layout, sitemap and noindex metadata. `layout-overflow.spec.ts` also checks 320x480, 740x320 and 1440x600 page/guide height, independent sidebar scrolling, dialog overflow, palette result visibility and controls after expansion/selection. Native bundle export is not device QA or a signed APK/IPA.
+
+Local layout-fix verification: 200 unit tests and 72 desktop/mobile browser tests passed. Two real-backend tests remain opt-in and were skipped. Lint, typecheck, Expo Doctor (20/20), audit (zero vulnerabilities), and isolated clean installation also passed. This records local verification, not publication of the changes to production.

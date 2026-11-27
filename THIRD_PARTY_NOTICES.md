@@ -21,6 +21,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 The [shadcn/ui command documentation](https://ui.shadcn.com/docs/components/command) informed search/keyboard interaction expectations. The palette is an original React Native implementation; no shadcn, cmdk or Radix source component was copied or installed.
 
+## Reactive State
+
+The application uses [RxJS 7.8.2](https://github.com/ReactiveX/rxjs) under Apache-2.0 for the opt-in, current-snapshot local insights store. Its package includes the upstream license and notices. It does not introduce remote analytics, replay or persisted event history.
+
 ## Original Artwork
 
 The blue hatchback/warehouse diagrams and geometric decoration are original application vector/layout artwork. No stock photography, external fonts, remote animation players or external image hotlinks are required. A generated raster resource was evaluated but rejected because the service returned a generating placeholder; it is not shipped.

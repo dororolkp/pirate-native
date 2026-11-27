@@ -33,6 +33,7 @@ export function DocumentationCenter() {
         </View>
       </WorkspaceBanner>
       <TextInput
+        editable={width > 0}
         accessibilityLabel="Search documentation"
         value={search.query}
         onChangeText={search.setQuery}
@@ -64,7 +65,14 @@ export function DocumentationCenter() {
           privacy.
         </Text>
       )}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 18 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+          gap: 18,
+        }}
+      >
         {search.results.map((article, index) => (
           <View
             key={article.id}

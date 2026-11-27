@@ -74,6 +74,7 @@ export function MissionHistory({
       {!compact && (
         <View style={s.body}>
           <TextInput
+            editable={width > 0}
             accessibilityLabel="Search missions"
             placeholder="Search by mission, robot, destination or status..."
             placeholderTextColor={colors.muted}

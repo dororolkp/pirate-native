@@ -164,10 +164,10 @@ export const STACK_CAPABILITIES: readonly StackCapability[] = [
     title: "Local product insights",
     category: "Privacy",
     reference: "Segment / RxJS / Amplitude",
-    alternative: "Typed event store + useSyncExternalStore",
+    alternative: "RxJS BehaviorSubject + useSyncExternalStore",
     status: "Included",
     detail:
-      "Explicit opt-in; aggregate allowlisted UI counters in memory only. No IDs, paths, session replay, persisted events or remote SDK.",
+      "Actual RxJS subscription lifecycle; explicit opt-in and aggregate UI counters in memory only. No IDs, paths, replay, persisted events or remote analytics SDK.",
   },
   {
     id: "consent",

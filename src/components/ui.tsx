@@ -5,6 +5,7 @@ import { visualAttributes } from "../lib/visual-attributes";
 import { colors, maximalist } from "../lib/theme";
 import { useGuidedTour } from "../hooks/use-guided-tour";
 import { guideId } from "../lib/guide-steps";
+import { useClientReady } from "../hooks/use-client-ready";
 
 export { colors, maximalist } from "../lib/theme";
 export function Button({
@@ -30,17 +31,19 @@ export function Button({
 }) {
   const target = `button-${guideId(label)}`;
   const highlighted = useGuidedTour()?.step?.target === target;
+  const inactive = !useClientReady() || Boolean(disabled);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       aria-expanded={expanded}
+      aria-pressed={selected}
       accessibilityState={{
-        disabled: Boolean(disabled),
+        disabled: inactive,
         selected: Boolean(selected),
         expanded,
       }}
-      disabled={disabled}
+      disabled={inactive}
       onPress={onPress}
       {...visualAttributes("button", danger ? "danger" : "regular", target)}
       style={({ pressed }) => [
@@ -53,7 +56,7 @@ export function Button({
           borderColor: maximalist.violet,
           boxShadow: "0 0 0 4px #ff8bc5",
         },
-        (disabled || pressed) && { opacity: disabled ? 0.45 : 0.75 },
+        (inactive || pressed) && { opacity: inactive ? 0.45 : 0.75 },
       ]}
     >
       {Icon && (
@@ -100,7 +103,7 @@ export function Panel({
   return (
     <View {...visualAttributes("panel")} style={[s.panel, style]}>
       <View style={s.panelHead}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text accessibilityRole="header" aria-level={2} style={s.panelTitle}>
             {title}
           </Text>
@@ -194,6 +197,7 @@ export const s = StyleSheet.create({
     borderColor: maximalist.outline,
   },
   panel: {
+    minWidth: 0,
     borderRadius: 22,
     borderWidth: 2,
     borderColor: maximalist.outline,

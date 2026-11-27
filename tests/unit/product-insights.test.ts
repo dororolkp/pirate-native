@@ -45,4 +45,19 @@ describe("opt-in local aggregate insights", () => {
       counts: { mission_history_exported: 0 },
     });
   });
+  it("retains only the current snapshot and removes RxJS subscriptions", () => {
+    const store = createInsightsStore();
+    store.setEnabled(true);
+    store.record("help_opened");
+    const listener = vi.fn();
+    const stop = store.subscribe(listener);
+    expect(listener).not.toHaveBeenCalled();
+    expect(store.getSnapshot().counts.help_opened).toBe(1);
+    store.record("help_opened");
+    expect(listener).toHaveBeenCalledOnce();
+    stop();
+    stop();
+    store.clear();
+    expect(listener).toHaveBeenCalledOnce();
+  });
 });

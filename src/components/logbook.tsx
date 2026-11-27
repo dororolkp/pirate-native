@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { BookOpen, Download, ShieldCheck, Trash2 } from "lucide-react-native";
 import { useLogbook } from "../hooks/use-logbook";
+import { useClientReady } from "../hooks/use-client-ready";
 import {
   ACTIVITY_LABELS,
   activityCsv,
@@ -13,6 +14,7 @@ import { Dialog } from "./dialog";
 
 export const Logbook = memo(function Logbook() {
   const journal = useLogbook();
+  const ready = useClientReady();
   const [query, setQuery] = useState("");
   const [outcome, setOutcome] = useState("all");
   const [page, setPage] = useState(0);
@@ -76,6 +78,7 @@ export const Logbook = memo(function Logbook() {
       >
         <View style={s.body}>
           <TextInput
+            editable={ready}
             accessibilityLabel="Search logbook"
             placeholder="Search local events or mode..."
             placeholderTextColor={colors.muted}

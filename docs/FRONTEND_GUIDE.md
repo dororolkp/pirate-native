@@ -6,7 +6,7 @@ The application remains Expo / React Native, with Expo Router and shared native 
 
 1. Open [Pirate](https://pirate-native.vercel.app).
 2. Select **Start guided tour** in the header (the route icon on a narrow phone screen), or open **Help** and select **Start guided tour**.
-3. Use **Next step** and **Previous step**. The web app scrolls to and outlines the current control; the guide explains what it does. Native screens use inline outlines and the guide panel.
+3. Use **Next step** and **Previous step**. The web app scrolls to and outlines the current control; the guide explains what it does. Native screens use inline outlines and the guide panel. The guide scrolls with the page so it cannot squeeze short screens to zero height. Scroll back up, or choose **View current guide** in the header, to return to its controls without restarting.
 4. **Exit guide** closes it at any time. **Finish guide** ends the last step. No tour step clicks a robot control, connects a server, deletes records or changes consent for you.
 
 The Overview prioritizes the map and quick-dispatch controls above decorative artwork and reports.
@@ -16,6 +16,8 @@ The Overview prioritizes the map and quick-dispatch controls above decorative ar
 **Workspace tools** in the header opens searchable navigation. Ctrl/Cmd+K works on web; Arrow Up/Down selects, Enter opens, and Escape closes. Closed-menu shortcuts ignore text-editing fields. The menu only navigates or starts the guide, never sends robot commands.
 
 Open `/docs` to search setup, safety, privacy and development guides. Topic filters combine with search; **Read** expands an article and **Clear documentation search** resets filters. Searches stay local and are not tracked.
+
+The workspace and desktop sidebar scroll independently. Dialog content scrolls below a persistent close button; keyboard arrows reveal the selected workspace tool. Controls wait for hydration before accepting interaction, preventing early clicks/searches from being reset. On short screens the header scrolls away to leave more room for content.
 
 Open `/integrations` for the **Free stack studio**. It distinguishes included React Native equivalents from optional account-based services and unconnected providers. **Enable local insights** counts only help, mission CSV exports and chart changes in memory. **Clear insight counters** resets counts; **Disable local insights** or reload clears everything. Enabling it does not enable GA4. See [Free-First Stack](FREE_STACK.md) for technology mapping and privacy boundaries.
 

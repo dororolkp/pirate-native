@@ -25,6 +25,9 @@ export default function RootHtml({ children }: PropsWithChildren) {
         />
         {headNodes}
         <style>{`
+          #root { min-height: 0; }
+          @supports (height: 100dvh) { #root { height: 100dvh; } }
+          #main-content, [role="dialog"] { overflow-wrap: anywhere; }
           :focus-visible { outline: 3px solid #443c91 !important; outline-offset: 3px; }
           .skip-link { position: fixed; top: -100px; left: 16px; z-index: 9999; padding: 14px 20px; border-radius: 10px; color: white; background: #443c91; font: 600 14px system-ui; }
           .skip-link:focus { top: 16px; }

@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, Slot, usePathname } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  type ScrollViewInstance,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import {
   Anchor,
   BarChart3,
@@ -49,6 +57,8 @@ function FleetShellContent() {
   const tour = useGuidedTour()!;
   const path = usePathname();
   const width = useLayoutWidth();
+  const { height } = useWindowDimensions();
+  const pageScroll = useRef<ScrollViewInstance>(null);
   const desktop = width >= 1050;
   const [activity, setActivity] = useState(false);
   const [help, setHelp] = useState(false);
@@ -104,12 +114,20 @@ function FleetShellContent() {
       );
     });
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView
+      style={{ flex: 1, minHeight: 0, backgroundColor: colors.background }}
+    >
       <WebPresence />
       <StatusBar style="dark" />
-      <View style={{ flex: 1, flexDirection: "row" }}>
+      <View style={{ flex: 1, minHeight: 0, flexDirection: "row" }}>
         {desktop && (
-          <View key="sidebar" style={styles.sidebar}>
+          <ScrollView
+            key="sidebar"
+            testID="sidebar-scroll"
+            style={styles.sidebar}
+            contentContainerStyle={styles.sidebarContent}
+            keyboardShouldPersistTaps="handled"
+          >
             <Link href="/" asChild>
               <Pressable accessibilityLabel="Pirate home" style={styles.brand}>
                 <View style={styles.mark}>
@@ -197,9 +215,16 @@ function FleetShellContent() {
                 <Text style={s.caption}>No account connected</Text>
               </View>
             </View>
-          </View>
+          </ScrollView>
         )}
-        <View key="workspace" style={{ flex: 1, minWidth: 0 }}>
+        <ScrollView
+          key="workspace"
+          ref={pageScroll}
+          testID="workspace-scroll"
+          style={{ flex: 1, minWidth: 0, minHeight: 0 }}
+          keyboardShouldPersistTaps="handled"
+          stickyHeaderIndices={width > 0 && height >= 650 ? [0] : undefined}
+        >
           <View style={styles.topbar}>
             <View style={s.row}>
               {!desktop ? (
@@ -233,23 +258,26 @@ function FleetShellContent() {
                   tone="orange"
                 />
               )}
-              <WorkspaceTools compact={width < 600} />
+              <WorkspaceTools compact={width < 900} />
               <Button
-                label="Start guided tour"
+                label={tour.step ? "View current guide" : "Start guided tour"}
                 icon={Route}
-                compact={width < 600}
-                onPress={tour.start}
+                compact={width < 900}
+                onPress={() => {
+                  pageScroll.current?.scrollTo({ y: 0, animated: false });
+                  if (!tour.step) tour.start();
+                }}
               />
               <Button
                 label="Notifications"
                 icon={Bell}
-                compact={width < 600}
+                compact={width < 900}
                 onPress={() => setActivity(true)}
               />
               <Button
                 label="Help"
                 icon={CircleHelp}
-                compact={width < 600}
+                compact={width < 900}
                 onPress={openHelp}
               />
             </View>
@@ -281,11 +309,11 @@ function FleetShellContent() {
               <Button label="Dismiss message" onPress={fleet.dismiss} />
             </View>
           )}
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
+          <View
+            style={{
               padding: desktop ? 30 : 16,
               paddingBottom: 35,
+              minWidth: 0,
             }}
           >
             <View
@@ -296,8 +324,8 @@ function FleetShellContent() {
             >
               <Slot />
             </View>
-          </ScrollView>
-        </View>
+          </View>
+        </ScrollView>
       </View>
       {!desktop && <View style={styles.mobileNav}>{nav(true)}</View>}
       <Dialog
@@ -373,11 +401,18 @@ function FleetShellContent() {
 const styles = StyleSheet.create({
   sidebar: {
     width: 232,
-    padding: 18,
-    paddingTop: 30,
+    flexGrow: 0,
+    flexShrink: 0,
+    minHeight: 0,
     backgroundColor: "#fff0dc",
     borderRightWidth: 2,
     borderRightColor: maximalist.outline,
+  },
+  sidebarContent: {
+    flexGrow: 1,
+    padding: 18,
+    paddingTop: 30,
+    paddingBottom: 30,
   },
   brand: {
     flexDirection: "row",
